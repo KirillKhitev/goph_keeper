@@ -1,0 +1,100 @@
+package config
+
+import (
+	"encoding/json"
+	"flag"
+	"fmt"
+	"os"
+)
+
+type ParamsServer struct {
+	AddrRun            string `json:"addr_run"`
+	DBConnectionString string `json:"database_dsn"`
+	MasterKey          string `json:"master_key"`
+}
+
+var ConfigServer ParamsServer = ParamsServer{}
+
+const DefaultServerConfigPath = "server_config.json"
+
+func (f *ParamsServer) Parse() error {
+	c := &ParamsServer{}
+	data, err := os.ReadFile(DefaultServerConfigPath)
+
+	if err != nil {
+		fmt.Println(err)
+	} else {
+		err = json.Unmarshal(data, c)
+
+		if err != nil {
+			return err
+		}
+	}
+
+	flag.StringVar(&f.AddrRun, "a", c.AddrRun, "address and port to run API")
+	flag.StringVar(&f.DBConnectionString, "d", c.DBConnectionString, "string for connection to DB, format 'host=%s port=%s user=%s password=%s dbname=%s sslmode=%s'")
+	flag.StringVar(&f.MasterKey, "mk", c.MasterKey, "master key server")
+	flag.Parse()
+
+	if envRunAddr := os.Getenv(`RUN_ADDRESS`); envRunAddr != `` {
+		f.AddrRun = envRunAddr
+	}
+
+	if envDBConnectionString := os.Getenv("DATABASE_URI"); envDBConnectionString != "" {
+		f.DBConnectionString = envDBConnectionString
+	}
+
+	if envMasterKey := os.Getenv("MASTER_KEY"); envMasterKey != "" {
+		f.MasterKey = envMasterKey
+	}
+
+	if f.AddrRun == "" {
+		return fmt.Errorf("missing required address to run API")
+	}
+
+	if f.DBConnectionString == "" {
+		return fmt.Errorf("missing required string for connection to DB")
+	}
+
+	if f.MasterKey == "" {
+		return fmt.Errorf("missing required master key server")
+	}
+
+	return nil
+}
+
+type ParamsClient struct {
+	AddrServer string `json:"addr_server"`
+}
+
+var ConfigClient ParamsClient = ParamsClient{}
+
+const DefaultClientConfigPath = "client_config.json"
+
+func (f *ParamsClient) Parse() error {
+	c := &ParamsClient{}
+	data, err := os.ReadFile(DefaultClientConfigPath)
+
+	if err != nil {
+		fmt.Println(err)
+	} else {
+		err = json.Unmarshal(data, c)
+
+		if err != nil {
+			return err
+		}
+	}
+
+	flag.StringVar(&f.AddrServer, "a", c.AddrServer, "address and port server")
+	flag.Parse()
+
+	if envRunAddr := os.Getenv(`RUN_ADDRESS`); envRunAddr != `` {
+		f.AddrServer = envRunAddr
+	}
+
+	if f.AddrServer == "" {
+		return fmt.Errorf("missing required address to run API")
+	}
+
+	return nil
+}
