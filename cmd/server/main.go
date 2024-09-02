@@ -27,6 +27,7 @@ func main() {
 	}
 }
 
+// run запускает приложение сервера.
 func run() error {
 	conn, err := sql.Open("pgx", config.ConfigServer.DBConnectionString)
 	if err != nil {

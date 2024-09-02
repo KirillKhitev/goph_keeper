@@ -1,3 +1,4 @@
+// Сервер для приема данных пользователей.
 package main
 
 import (
@@ -15,11 +16,13 @@ import (
 	"syscall"
 )
 
+// app основная структура приложения.
 type app struct {
 	store  store.Store
 	server http.Server
 }
 
+// newApp конструктор приложения.
 func newApp(s store.Store) *app {
 	instance := &app{
 		store: s,
@@ -28,6 +31,7 @@ func newApp(s store.Store) *app {
 	return instance
 }
 
+// Close корректно останавливает приложение.
 func (a *app) Close() error {
 	if err := a.shutdownServer(); err != nil {
 		return fmt.Errorf("error by Server shutdown: %w", err)
@@ -42,6 +46,7 @@ func (a *app) Close() error {
 	return nil
 }
 
+// StartServer запускает сервер.
 func (a *app) StartServer() error {
 	log.Printf("Running server: %v", config.ConfigServer)
 
@@ -78,6 +83,7 @@ func (a *app) StartServer() error {
 	return a.server.ListenAndServe()
 }
 
+// shutdownServer останавливает сервер.
 func (a *app) shutdownServer() error {
 	shutdownCtx, shutdownRelease := context.WithCancel(context.TODO())
 	defer shutdownRelease()
@@ -91,6 +97,7 @@ func (a *app) shutdownServer() error {
 	return nil
 }
 
+// CatchTerminateSignal ловит сигналы остановки сервера.
 func (a *app) CatchTerminateSignal() error {
 	terminateSignals := make(chan os.Signal, 1)
 

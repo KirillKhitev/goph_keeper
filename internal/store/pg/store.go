@@ -1,3 +1,4 @@
+// Пакет Postgre-хранилища данных.
 package pg
 
 import (
@@ -14,14 +15,17 @@ import (
 	"time"
 )
 
+// Структура хранилища.
 type Store struct {
 	conn *sql.DB
 }
 
+// Close закрывает хранилище.
 func (s *Store) Close() error {
 	return s.conn.Close()
 }
 
+// Конструктор хранилища.
 func NewStore(ctx context.Context, conn *sql.DB) (*Store, error) {
 	store := &Store{
 		conn: conn,
@@ -34,6 +38,7 @@ func NewStore(ctx context.Context, conn *sql.DB) (*Store, error) {
 	return store, nil
 }
 
+// Bootstrap инициализирует хранилище, создает таблицы, если их нет.
 func (s *Store) Bootstrap(ctx context.Context) error {
 	tx, err := s.conn.BeginTx(ctx, nil)
 	if err != nil {
@@ -72,6 +77,7 @@ func (s *Store) Bootstrap(ctx context.Context) error {
 	return tx.Commit()
 }
 
+// CreateUser создает нового пользователя.
 func (s *Store) CreateUser(ctx context.Context, data auth.AuthorizingData) (models.User, error) {
 	user := data.NewUserFromData()
 
@@ -94,6 +100,7 @@ func (s *Store) CreateUser(ctx context.Context, data auth.AuthorizingData) (mode
 	return user, err
 }
 
+// GetUserByUserName ищет пользователя в БД по user_name.
 func (s *Store) GetUserByUserName(ctx context.Context, userName string) (models.User, error) {
 	var user models.User
 
@@ -117,6 +124,7 @@ func (s *Store) GetUserByUserName(ctx context.Context, userName string) (models.
 	return user, err
 }
 
+// GetUserByID ищет пользователя в БД по ID.
 func (s *Store) GetUserByID(ctx context.Context, userID string) (models.User, error) {
 	var user models.User
 
@@ -139,6 +147,7 @@ func (s *Store) GetUserByID(ctx context.Context, userID string) (models.User, er
 	return user, nil
 }
 
+// List получает список записей пользователя.
 func (s *Store) List(ctx context.Context, userID string) ([]models.Data, error) {
 	var result []models.Data
 
@@ -181,6 +190,7 @@ func (s *Store) List(ctx context.Context, userID string) ([]models.Data, error) 
 	return result, nil
 }
 
+// Get получает запись пользователя.
 func (s *Store) Get(ctx context.Context, data models.Data) (models.Data, bool, error) {
 	var result models.Data
 
@@ -214,6 +224,7 @@ func (s *Store) Get(ctx context.Context, data models.Data) (models.Data, bool, e
 	return result, true, nil
 }
 
+// Save сохраняет запись в БД.
 func (s *Store) Save(ctx context.Context, data models.Data) (models.Data, error) {
 	_, ok, err := s.Get(ctx, data)
 	if err != nil {

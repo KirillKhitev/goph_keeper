@@ -13,20 +13,24 @@ import (
 	"net/http"
 )
 
+// ResponseType структура для хранения ответа сервера агенту.
 type ResponseType struct {
 	LogMsg string
 	Body   []byte
 	Code   int
 }
 
+// RegisterErrPrefix ошибка при регистрации пользователя.
 const RegisterErrPrefix = "Error by register new User"
 
+// UserAuthBody структура данных авторизации пользователя.
 type UserAuthBody struct {
 	ID  string `json:"id,omitempty"`
 	Msg string `json:"msg"`
 	Key string `json:"key,omitempty"`
 }
 
+// RegisterUser метод для регистрации пользователя.
 func RegisterUser(w http.ResponseWriter, r *http.Request, s store.Store) ResponseType {
 	requestData := auth.AuthorizingData{}
 
@@ -91,8 +95,10 @@ func RegisterUser(w http.ResponseWriter, r *http.Request, s store.Store) Respons
 	}
 }
 
+// LoginErrPrefix ошибка при авторизации пользователя.
 const LoginErrPrefix = "Error by login User"
 
+// Login метод для авторизации пользователя.
 func Login(w http.ResponseWriter, r *http.Request, s store.Store) ResponseType {
 	requestData := auth.AuthorizingData{}
 
@@ -157,6 +163,7 @@ func Login(w http.ResponseWriter, r *http.Request, s store.Store) ResponseType {
 	}
 }
 
+// prepareUserAuthBody готовит тело ответа агенту при авторизации.
 func prepareUserAuthBody(s string, k string, id string) []byte {
 	b := &UserAuthBody{
 		ID:  id,
@@ -169,6 +176,7 @@ func prepareUserAuthBody(s string, k string, id string) []byte {
 	return r
 }
 
+// GetUserFromAuthHeader получает пользователя при запросе на сервер.
 func GetUserFromAuthHeader(w http.ResponseWriter, r *http.Request, s store.Store) (string, ResponseType) {
 	userID, err := auth.GetUserIDFromAuthHeader(r.Header.Get("Authorization"))
 	if err != nil {

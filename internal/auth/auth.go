@@ -14,19 +14,25 @@ import (
 	"time"
 )
 
+// TokenExp время жизни авторизационного токена.
 const TokenExp = time.Hour * 3
+
+// SecretKey секретный ключ сервера.
 const SecretKey = "dswereGsdfgert2345Dsd"
 
+// AuthorizingData хранит данные авторизации.
 type AuthorizingData struct {
 	UserName string `json:"user_name"`
 	Password string `json:"password"`
 }
 
+// GenerateHashPassword генерирует хеш из пароля.
 func (d *AuthorizingData) GenerateHashPassword() string {
 	hashSum := GetHash(d.Password, config.ConfigServer.MasterKey)
 	return hashSum
 }
 
+// NewUserFromData конструктор структуры пользователя из авторизационных данных.
 func (d *AuthorizingData) NewUserFromData() models.User {
 	user := models.User{
 		ID:               guid.NewString(),
@@ -38,11 +44,13 @@ func (d *AuthorizingData) NewUserFromData() models.User {
 	return user
 }
 
+// Claims - требования к авторизационному токену.
 type Claims struct {
 	jwt.RegisteredClaims
 	UserID string
 }
 
+// BuildJWTString генерирует авторизационный токен.
 func BuildJWTString(user models.User) (string, error) {
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, Claims{
 		RegisteredClaims: jwt.RegisteredClaims{
@@ -59,6 +67,7 @@ func BuildJWTString(user models.User) (string, error) {
 	return tokenString, nil
 }
 
+// GetUserIDFromAuthHeader вытаскивает userID из авторизационного токена.
 func GetUserIDFromAuthHeader(header string) (string, error) {
 	tokenString := strings.TrimPrefix(header, "Bearer ")
 
@@ -86,6 +95,7 @@ func GetUserIDFromAuthHeader(header string) (string, error) {
 	return claims.UserID, nil
 }
 
+// GetHash готовит хеш из строки с помощью ключа.
 func GetHash(data, key string) string {
 	h := hmac.New(sha256.New, []byte(key))
 	h.Write([]byte(data))

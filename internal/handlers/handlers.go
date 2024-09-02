@@ -7,12 +7,15 @@ import (
 	"net/http"
 )
 
+// Тип хендлер.
 type Handler struct {
 	Store store.Store
 }
 
+// Хендлер регистрации.
 type Register Handler
 
+// Обработка запросов регистрации.
 func (ch *Register) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
 		w.WriteHeader(http.StatusMethodNotAllowed)
@@ -24,8 +27,10 @@ func (ch *Register) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	sendResponse(response, w)
 }
 
+// Хендлер авторизации.
 type Login Handler
 
+// Обработка запросов авторизации.
 func (ch *Login) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
 		w.WriteHeader(http.StatusMethodNotAllowed)
@@ -37,8 +42,10 @@ func (ch *Login) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	sendResponse(response, w)
 }
 
+// Хендлер обновления данных в хранилище.
 type Update Handler
 
+// Обработка запросов обновления данных.
 func (ch *Update) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPut {
 		w.WriteHeader(http.StatusMethodNotAllowed)
@@ -56,8 +63,10 @@ func (ch *Update) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	sendResponse(response, w)
 }
 
+// Хендлер получения списка записей.
 type List Handler
 
+// Обработка запросов списка записей пользователя.
 func (ch *List) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
 		w.WriteHeader(http.StatusMethodNotAllowed)
@@ -75,8 +84,10 @@ func (ch *List) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	sendResponse(response, w)
 }
 
+// Хендлер получения информации записи.
 type Get Handler
 
+// Обработка запросов информации записи.
 func (ch *Get) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
 		w.WriteHeader(http.StatusMethodNotAllowed)
@@ -94,6 +105,7 @@ func (ch *Get) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	sendResponse(response, w)
 }
 
+// Отправка ответа сервера агенту.
 func sendResponse(res api.ResponseType, writer http.ResponseWriter) {
 	if len(res.LogMsg) > 0 {
 		log.Println(res.LogMsg)

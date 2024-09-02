@@ -14,6 +14,7 @@ import (
 	"strings"
 )
 
+// LoginStageType модель авторизации пользователя.
 type LoginStageType struct {
 	RegisterStageType
 	inputs []textinput.Model
@@ -21,10 +22,12 @@ type LoginStageType struct {
 	client *client.Client
 }
 
+// Init - заглушка для интерфейса.
 func (s *LoginStageType) Init() tea.Cmd {
 	return nil
 }
 
+// Prepare подготавливает модель.
 func (s *LoginStageType) Prepare(a *agent) {
 	s.inputs = make([]textinput.Model, 2)
 	s.back = "start"
@@ -53,6 +56,7 @@ func (s *LoginStageType) Prepare(a *agent) {
 	}
 }
 
+// Update обработка событий пользователя.
 func (m *LoginStageType) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
@@ -110,6 +114,7 @@ func (m *LoginStageType) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	return m, cmd
 }
 
+// process отправляет данные формы авторизации на сервер.
 func (m *LoginStageType) process() (tea.Model, tea.Cmd) {
 	data := auth.AuthorizingData{
 		UserName: m.inputs[0].Value(),
@@ -153,6 +158,7 @@ func (m *LoginStageType) process() (tea.Model, tea.Cmd) {
 	}
 }
 
+// updateInputs обработка ввода в поля формы.
 func (m *LoginStageType) updateInputs(msg tea.Msg) tea.Cmd {
 	cmds := make([]tea.Cmd, len(m.inputs))
 
@@ -163,6 +169,7 @@ func (m *LoginStageType) updateInputs(msg tea.Msg) tea.Cmd {
 	return tea.Batch(cmds...)
 }
 
+// View отображает форму в терминале.
 func (m *LoginStageType) View() string {
 	var b strings.Builder
 

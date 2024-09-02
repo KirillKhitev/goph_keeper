@@ -10,11 +10,13 @@ import (
 	"time"
 )
 
+// RestyClient структура resty-клиента.
 type RestyClient struct {
 	client *resty.Client
 	userID string
 }
 
+// APIServiceResult структура ответа от http-клиента.
 type APIServiceResult struct {
 	Code     int
 	Response []byte
@@ -22,6 +24,7 @@ type APIServiceResult struct {
 	Token    string
 }
 
+// NewRestyClient конструктор resty-клиента.
 func NewRestyClient() (*RestyClient, error) {
 	restyClient := &RestyClient{
 		client: resty.New(),
@@ -30,16 +33,19 @@ func NewRestyClient() (*RestyClient, error) {
 	return restyClient, nil
 }
 
+// APIError структура ошибки от сервера.
 type APIError struct {
 	Code      int       `json:"code"`
 	Message   string    `json:"message"`
 	Timestamp time.Time `json:"timestamp"`
 }
 
+// SetUserID сеттер userID в resty-клиент.
 func (c *RestyClient) SetUserID(userID string) {
 	c.userID = userID
 }
 
+// Send отправляет данные на сервер.
 func (c *RestyClient) Send(ctx context.Context, url string, headers map[string]string, data []byte, method string) APIServiceResult {
 	result := APIServiceResult{}
 	log.Println("source data: ", string(data))
@@ -84,6 +90,7 @@ func (c *RestyClient) Send(ctx context.Context, url string, headers map[string]s
 	return result
 }
 
+// prepareDataForSend подготавливает данные перед отправкой на сервер.
 func (c *RestyClient) prepareDataForSend(data []byte) ([]byte, error) {
 	dataCompress, err := c.Compress(data)
 	if err != nil {
@@ -112,6 +119,7 @@ func (c *RestyClient) Compress(data []byte) ([]byte, error) {
 	return b.Bytes(), nil
 }
 
+// Close закрытие resty-клиента.
 func (c *RestyClient) Close() error {
 	return nil
 }

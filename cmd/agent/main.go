@@ -1,3 +1,4 @@
+// Агент для отправки/отображения приватных данных пользователя.
 package main
 
 import (
@@ -27,6 +28,7 @@ func main() {
 	}
 }
 
+// run запускает приложение агента.
 func run() error {
 	f, err := tea.LogToFile("debug.log", "debug")
 	if err != nil {
@@ -47,7 +49,7 @@ func run() error {
 		return err
 	}
 
-	return nil
+	return app.CatchTerminateSignal()
 }
 
 // printBuildInfo выводит в консоль информацию по сборке.

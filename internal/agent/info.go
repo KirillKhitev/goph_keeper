@@ -6,18 +6,21 @@ import (
 	"strings"
 )
 
+// InfoStageType модель для информационного сообщения пользователю.
 type InfoStageType struct {
 	message    string
 	back       string
 	backButton string
 }
 
+// infoMsg сообщение для вывода экрана с информацией.
 type infoMsg struct {
 	message    string
 	back       string
 	backButton string
 }
 
+// InitInfoModel инициализация модели.
 func InitInfoModel(message string, back, backButton string) *InfoStageType {
 	return &InfoStageType{
 		message:    message,
@@ -26,13 +29,16 @@ func InitInfoModel(message string, back, backButton string) *InfoStageType {
 	}
 }
 
+// Init - заглушка для интерфейса.
 func (s *InfoStageType) Init() tea.Cmd {
 	return nil
 }
 
+// Prepare - заглушка для интерфейса.
 func (s *InfoStageType) Prepare(a *agent) {
 }
 
+// Update обрабатывает события пользователя.
 func (m *InfoStageType) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
@@ -50,6 +56,7 @@ func (m *InfoStageType) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	return m, nil
 }
 
+// View отображает экран в терминале.
 func (m *InfoStageType) View() string {
 	var b strings.Builder
 

@@ -1,3 +1,4 @@
+// Пакет моделей экранов агента.
 package agent
 
 import (
@@ -12,6 +13,7 @@ import (
 	"syscall"
 )
 
+// Базовый интерфейс модели экрана агента.
 type stage interface {
 	Init() tea.Cmd
 	Update(msg tea.Msg) (tea.Model, tea.Cmd)
@@ -19,6 +21,7 @@ type stage interface {
 	Prepare(a *agent)
 }
 
+// Модель экрана агента.
 type stageAgent struct {
 	stage
 	choices    []string
@@ -31,6 +34,7 @@ type stageAgent struct {
 	recordID   string
 }
 
+// Главная модель агента.
 type agent struct {
 	client      *client.Client
 	userID      string
@@ -42,6 +46,7 @@ type agent struct {
 	recordID    string
 }
 
+// Стили отображения текста
 var (
 	focusedStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("205"))
 	blurredStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("240"))
@@ -49,15 +54,19 @@ var (
 	noStyle      = lipgloss.NewStyle()
 )
 
+// Команда вывода ошибок
 type errMsg struct {
 	error
 	back string
 }
 
+// Команда вывода списка записей пользователя, с запросом обновления с сервера.
 type openList struct{}
 
+// Вывод ошибки в текстовом виде.
 func (e errMsg) Error() string { return e.error.Error() }
 
+// Init инициализирует модель агента.
 func (a agent) Init() tea.Cmd {
 	cmds := make([]tea.Cmd, 2)
 	cmds = append(cmds, a.fp.Init(), a.Stages[a.currenStage].Init())
@@ -65,10 +74,13 @@ func (a agent) Init() tea.Cmd {
 	return tea.Batch(cmds...)
 }
 
+// Prepare подготавливает модель.
 func (a agent) Prepare(agent *agent) {
 
 }
 
+// Update отвечает за выполение команд на дейстсвия пользователя.
+// Обрабатывает стартовые события и осуществляет роутинг между моделями агента.
 func (a agent) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.WindowSizeMsg:
@@ -121,6 +133,7 @@ func (a agent) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	return a, tea.Batch(cmds...)
 }
 
+// View отображает экран текущей модели агента.
 func (a agent) View() string {
 	var s string
 
@@ -175,12 +188,13 @@ func NewAgent() (*agent, error) {
 	return a, nil
 }
 
+// Конструктор Http-клиента.
 func newClient() (client.Client, error) {
 	return client.NewRestyClient()
 }
 
 // catchTerminateSignal ловит сигналы ОС для корректной остановки агента.
-func (a *agent) catchTerminateSignal() error {
+func (a *agent) CatchTerminateSignal() error {
 	terminateSignals := make(chan os.Signal, 1)
 
 	signal.Notify(terminateSignals, syscall.SIGINT, syscall.SIGTERM, syscall.SIGQUIT)

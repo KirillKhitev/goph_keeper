@@ -16,12 +16,16 @@ import (
 	"strings"
 )
 
+// openStage сообщение для смены модели.
 type openStage string
+
+// authSuccessMsg сообщение при успешной авторизации.
 type authSuccessMsg struct {
 	userID string
 	token  string
 }
 
+// RegisterStageType модель регистрации нового пользователя.
 type RegisterStageType struct {
 	stageAgent
 	focusIndex int
@@ -31,10 +35,12 @@ type RegisterStageType struct {
 	client     *client.Client
 }
 
+// Init - заглушка для интерфейса.
 func (s *RegisterStageType) Init() tea.Cmd {
 	return nil
 }
 
+// Prepare подготавливает модель.
 func (s *RegisterStageType) Prepare(a *agent) {
 	s.inputs = make([]textinput.Model, 2)
 	s.back = "start"
@@ -63,6 +69,7 @@ func (s *RegisterStageType) Prepare(a *agent) {
 	}
 }
 
+// Update обработка событий пользователя.
 func (m *RegisterStageType) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
@@ -120,6 +127,7 @@ func (m *RegisterStageType) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	return m, cmd
 }
 
+// process отправляет форму регистрации на сервер.
 func (m *RegisterStageType) process() (tea.Model, tea.Cmd) {
 	data := auth.AuthorizingData{
 		UserName: m.inputs[0].Value(),
@@ -180,6 +188,7 @@ func (m *RegisterStageType) process() (tea.Model, tea.Cmd) {
 	}
 }
 
+// updateInputs обрабатывает ввод текста в поля формы.
 func (m *RegisterStageType) updateInputs(msg tea.Msg) tea.Cmd {
 	cmds := make([]tea.Cmd, len(m.inputs))
 
@@ -190,6 +199,7 @@ func (m *RegisterStageType) updateInputs(msg tea.Msg) tea.Cmd {
 	return tea.Batch(cmds...)
 }
 
+// View отображает форму в терминале.
 func (m *RegisterStageType) View() string {
 	var b strings.Builder
 

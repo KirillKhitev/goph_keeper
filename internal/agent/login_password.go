@@ -17,12 +17,14 @@ import (
 	"strings"
 )
 
+// FormStageType интерфейс формы записи пользователя.
 type FormStageType interface {
 	getClient() *client.Client
 	getToken() string
 	getRecordID() string
 }
 
+// LoginPasswordStageType модель записи логин-пароль.
 type LoginPasswordStageType struct {
 	stageAgent
 	focusIndex int
@@ -31,22 +33,27 @@ type LoginPasswordStageType struct {
 	client     *client.Client
 }
 
+// getClient возвращает http-клиент.
 func (m *LoginPasswordStageType) getClient() *client.Client {
 	return m.client
 }
 
+// getToken возвращает авторизационный токен.
 func (m *LoginPasswordStageType) getToken() string {
 	return m.token
 }
 
+// getRecordID возвращает ID записи пользователя.
 func (m *LoginPasswordStageType) getRecordID() string {
 	return m.recordID
 }
 
+// Init - заглушка для интерфейса.
 func (m *LoginPasswordStageType) Init() tea.Cmd {
 	return nil
 }
 
+// Prepare подготавливает модель данными.
 func (m *LoginPasswordStageType) Prepare(a *agent) {
 	m.inputs = make([]textinput.Model, 4)
 	m.back = "operation_list"
@@ -94,6 +101,7 @@ func (m *LoginPasswordStageType) Prepare(a *agent) {
 
 }
 
+// getRecordDataFromServer метод получения данных записи с сервера.
 func getRecordDataFromServer[T any](m FormStageType, data models.Data, body T) (models.Data, T, error) {
 	var response client.APIServiceResult
 
@@ -135,6 +143,7 @@ func getRecordDataFromServer[T any](m FormStageType, data models.Data, body T) (
 	return data, body, err
 }
 
+// Update обработка событий пользователя.
 func (m *LoginPasswordStageType) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
@@ -190,6 +199,7 @@ func (m *LoginPasswordStageType) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	return m, cmd
 }
 
+// save сохранение формы на сервере.
 func (m *LoginPasswordStageType) save() (tea.Model, tea.Cmd) {
 	dataBody := models.LoginBody{
 		Login:    m.inputs[1].Value(),
@@ -235,6 +245,7 @@ func (m *LoginPasswordStageType) save() (tea.Model, tea.Cmd) {
 	}
 }
 
+// updateInputs обработка изменений полей формы.
 func (m *LoginPasswordStageType) updateInputs(msg tea.Msg) tea.Cmd {
 	cmds := make([]tea.Cmd, len(m.inputs))
 
@@ -245,6 +256,7 @@ func (m *LoginPasswordStageType) updateInputs(msg tea.Msg) tea.Cmd {
 	return tea.Batch(cmds...)
 }
 
+// View отображение формы в терминале.
 func (m *LoginPasswordStageType) View() string {
 	var b strings.Builder
 

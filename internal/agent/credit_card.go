@@ -16,16 +16,19 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 )
 
+// CreditCardStageType модель формы кредитной карты.
 type CreditCardStageType struct {
 	LoginPasswordStageType
 }
 
+// Индексы полей формы.
 const (
 	ccn = iota + 1
 	exp
 	cvv
 )
 
+// Prepare подготавливает модель.
 func (m *CreditCardStageType) Prepare(a *agent) {
 	m.inputs = make([]textinput.Model, 5)
 	m.back = "operation_list"
@@ -79,6 +82,7 @@ func (m *CreditCardStageType) Prepare(a *agent) {
 
 }
 
+// Update обрабатывает события пользователя.
 func (m *CreditCardStageType) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
@@ -135,6 +139,7 @@ func (m *CreditCardStageType) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	return m, cmd
 }
 
+// save отправляет данные формы на сервер.
 func (m *CreditCardStageType) save() (tea.Model, tea.Cmd) {
 	dataBody := models.CreditCardBody{
 		Ccn: m.inputs[ccn].Value(),
@@ -181,6 +186,7 @@ func (m *CreditCardStageType) save() (tea.Model, tea.Cmd) {
 	}
 }
 
+// ccnValidator валидирует номер карты.
 func ccnValidator(s string) error {
 	if len(s) > 16+3 {
 		return fmt.Errorf("Номер карты слишком длинный")
@@ -200,6 +206,7 @@ func ccnValidator(s string) error {
 	return err
 }
 
+// expValidator валидирует срок действия карты.
 func expValidator(s string) error {
 	e := strings.ReplaceAll(s, "/", "")
 	_, err := strconv.ParseInt(e, 10, 64)
@@ -215,6 +222,7 @@ func expValidator(s string) error {
 	return nil
 }
 
+// cvvValidator валидирует ccv-код.
 func cvvValidator(s string) error {
 	_, err := strconv.ParseInt(s, 10, 64)
 	return err

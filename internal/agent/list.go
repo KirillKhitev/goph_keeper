@@ -13,31 +13,42 @@ import (
 	"log"
 )
 
+// Стиль документа.
 var docStyle = lipgloss.NewStyle().Padding(2, 2)
 
+// openForm команда для открытия формы пользовательской записи.
 type openForm struct {
 	id          string
 	type_record string
 }
 
+// listItem элемент списка записей.
 type listItem struct {
 	id, title, desc, type_record string
 }
 
-func (i listItem) Title() string       { return i.title }
+// Title возвращает заголовок элемента списка.
+func (i listItem) Title() string { return i.title }
+
+// Description возвращает описание элемента списка.
 func (i listItem) Description() string { return i.desc }
+
+// FilterValue метод для фильтрации элементов списка.
 func (i listItem) FilterValue() string { return i.title }
 
+// ListStageType модель списка записей пользователя.
 type ListStageType struct {
 	userID string
 	List   list.Model
 	client *client.Client
 }
 
+// Init - заглушка для интерфейса.
 func (m *ListStageType) Init() tea.Cmd {
 	return nil
 }
 
+// Prepare подготавливает список записей пользователя.
 func (m *ListStageType) Prepare(a *agent) {
 	m.userID = a.userID
 	m.client = a.client
@@ -73,6 +84,7 @@ func (m *ListStageType) Prepare(a *agent) {
 	m.List.SetItems(items)
 }
 
+// Update обрабатывает события пользователя.
 func (m *ListStageType) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
@@ -106,6 +118,7 @@ func (m *ListStageType) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	return m, cmd
 }
 
+// View отображает элементы списка записей пользователя.
 func (m *ListStageType) View() string {
 	s := m.List.View()
 	s += "\n\n[ Ctrl+n ] - Создать новую запись\n"

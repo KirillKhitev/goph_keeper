@@ -17,11 +17,13 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 )
 
+// TextStageType модель текстовой записи пользователя.
 type TextStageType struct {
 	LoginPasswordStageType
 	textarea textarea.Model
 }
 
+// Prepare подготавливает модель.
 func (m *TextStageType) Prepare(a *agent) {
 	m.inputs = make([]textinput.Model, 2)
 	m.back = "operation_list"
@@ -65,6 +67,7 @@ func (m *TextStageType) Prepare(a *agent) {
 	}
 }
 
+// save отправляет форму на сервер.
 func (m *TextStageType) save() (tea.Model, tea.Cmd) {
 	body, _ := mycrypto.Encrypt([]byte(m.textarea.Value()), m.userID)
 
@@ -104,6 +107,7 @@ func (m *TextStageType) save() (tea.Model, tea.Cmd) {
 	}
 }
 
+// Update обработка событий пользователя.
 func (m *TextStageType) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	var cmds []tea.Cmd
 
@@ -175,6 +179,7 @@ func (m *TextStageType) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	return m, tea.Batch(cmds...)
 }
 
+// View отображение экрана в терминале.
 func (m *TextStageType) View() string {
 	var b strings.Builder
 
@@ -192,6 +197,7 @@ func (m *TextStageType) View() string {
 	return b.String()
 }
 
+// getRecordDataFromServer получение данных записи с сервера.
 func (m *TextStageType) getRecordDataFromServer(data models.Data, body string) (models.Data, string, error) {
 	var response client.APIServiceResult
 

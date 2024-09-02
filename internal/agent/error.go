@@ -6,12 +6,14 @@ import (
 	"strings"
 )
 
+// ErrorStageType - модель для отображения ошибок.
 type ErrorStageType struct {
 	focusIndex int
 	back       string
 	error      error
 }
 
+// InitErrorModel инициализирует модель.
 func InitErrorModel(error error, back string) *ErrorStageType {
 	return &ErrorStageType{
 		error: error,
@@ -19,12 +21,16 @@ func InitErrorModel(error error, back string) *ErrorStageType {
 	}
 }
 
+// Init - заглушка для интерфейса.
 func (s *ErrorStageType) Init() tea.Cmd {
 	return nil
 }
+
+// Prepare - заглушка для интерфейса.
 func (s *ErrorStageType) Prepare(a *agent) {
 }
 
+// Update - обработка событий пользователя.
 func (m *ErrorStageType) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
@@ -41,6 +47,7 @@ func (m *ErrorStageType) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	return m, nil
 }
 
+// View - отображает текст модели в терминале.
 func (m *ErrorStageType) View() string {
 	var b strings.Builder
 

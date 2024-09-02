@@ -6,6 +6,7 @@ import (
 	"github.com/KirillKhitev/goph_keeper/internal/models"
 )
 
+// Интерфейс хранилища данных.
 type Store interface {
 	CreateUser(ctx context.Context, data auth.AuthorizingData) (models.User, error)
 	GetUserByUserName(ctx context.Context, userName string) (models.User, error)

@@ -5,18 +5,23 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 )
 
+// operation структура для операции пользователя.
 type operation struct {
 	title, type_record string
 }
 
+// OperationListStageType модель операции пользователя.
 type OperationListStageType struct {
 	stageAgent
 	operations []operation
 }
 
+// Init заглушка для интерфейса.
 func (s *OperationListStageType) Init() tea.Cmd {
 	return nil
 }
+
+// Prepare подготавливает модель.
 func (s *OperationListStageType) Prepare(a *agent) {
 	s.operations = []operation{
 		{
@@ -38,6 +43,7 @@ func (s *OperationListStageType) Prepare(a *agent) {
 	}
 }
 
+// Update обработка событий пользователя.
 func (s *OperationListStageType) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
@@ -67,6 +73,7 @@ func (s *OperationListStageType) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	return s, nil
 }
 
+// View отображение списка операций.
 func (s *OperationListStageType) View() string {
 	str := "Что будем создавать?\n\n"
 

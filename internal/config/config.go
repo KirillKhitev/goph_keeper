@@ -1,3 +1,4 @@
+// Пакет config для конфигурирования сервера и агента.
 package config
 
 import (
@@ -7,16 +8,20 @@ import (
 	"os"
 )
 
+// ParamsServer - параметры сервера.
 type ParamsServer struct {
 	AddrRun            string `json:"addr_run"`
 	DBConnectionString string `json:"database_dsn"`
 	MasterKey          string `json:"master_key"`
 }
 
+// ConfigServer хранит параметры запуска сервера.
 var ConfigServer ParamsServer = ParamsServer{}
 
+// DefaultServerConfigPath - путь к конфигу сервера.
 const DefaultServerConfigPath = "server_config.json"
 
+// Parse разбирает аргументы запуска сервера в переменнную ConfigServer.
 func (f *ParamsServer) Parse() error {
 	c := &ParamsServer{}
 	data, err := os.ReadFile(DefaultServerConfigPath)
@@ -63,14 +68,18 @@ func (f *ParamsServer) Parse() error {
 	return nil
 }
 
+// ParamsClient - параметры сервера.
 type ParamsClient struct {
 	AddrServer string `json:"addr_server"`
 }
 
+// ConfigClient хранит параметры запуска агента.
 var ConfigClient ParamsClient = ParamsClient{}
 
+// DefaultClientConfigPath - путь к конфигу агента.
 const DefaultClientConfigPath = "client_config.json"
 
+// Parse разбирает аргументы запуска агента в переменнную ConfigClient.
 func (f *ParamsClient) Parse() error {
 	c := &ParamsClient{}
 	data, err := os.ReadFile(DefaultClientConfigPath)

@@ -1,3 +1,4 @@
+// Пакет отвечает за шифрование/дешифрование данных.
 package mycrypto
 
 import (
@@ -96,6 +97,7 @@ func Decrypt(data []byte, keyFile string) ([]byte, error) {
 	return res, err
 }
 
+// GenerateRandom генерирует срез рандомных данных.
 func GenerateRandom(size int) ([]byte, error) {
 	// генерируем криптостойкие случайные байты в b
 	b := make([]byte, size)

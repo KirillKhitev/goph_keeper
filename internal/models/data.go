@@ -4,6 +4,7 @@ import (
 	"time"
 )
 
+// Data содержит данные записи пользователя.
 type Data struct {
 	ID          string    `json:"id,omitempty"`
 	Name        []byte    `json:"name,omitempty"`
@@ -15,11 +16,13 @@ type Data struct {
 	Description []byte    `json:"description,omitempty"`
 }
 
+// LoginBody тип тела авторизации.
 type LoginBody struct {
 	Login    string
 	Password string
 }
 
+// LoginBody тип тела банковской карты.
 type CreditCardBody struct {
 	Ccn string
 	Exp string

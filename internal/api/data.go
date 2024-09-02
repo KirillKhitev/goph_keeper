@@ -11,8 +11,10 @@ import (
 	"time"
 )
 
+// ListDataErrPrefix ошибка получения списка записей пользователя.
 const ListDataErrPrefix = "Error by get list data"
 
+// ListData метод получения списка записей пользователя.
 func ListData(w http.ResponseWriter, r *http.Request, userID string, s store.Store) ResponseType {
 	result, err := s.List(r.Context(), userID)
 	if err != nil {
@@ -37,8 +39,10 @@ func ListData(w http.ResponseWriter, r *http.Request, userID string, s store.Sto
 	}
 }
 
+// GetDataErrPrefix ошибка получения записи пользователя.
 const GetDataErrPrefix = "Error by get record data"
 
+// GetData метод получения информации записи пользователя.
 func GetData(w http.ResponseWriter, r *http.Request, userID string, s store.Store) ResponseType {
 	defer r.Body.Close()
 	body, err := io.ReadAll(r.Body)
@@ -96,9 +100,13 @@ func GetData(w http.ResponseWriter, r *http.Request, userID string, s store.Stor
 	}
 }
 
+// UpdateDataErrPrefix ошибка обновления записи пользователя.
 const UpdateDataErrPrefix = "Error by save data"
+
+// FilesDir путь к папке с файлами пользователей.
 const FilesDir = "files"
 
+// UpdateData метод обновления записи пользователя.
 func UpdateData(w http.ResponseWriter, r *http.Request, userID string, s store.Store) ResponseType {
 	defer r.Body.Close()
 	body, err := io.ReadAll(r.Body)
@@ -140,6 +148,7 @@ func UpdateData(w http.ResponseWriter, r *http.Request, userID string, s store.S
 	}
 }
 
+// saveDataFile сохранение тела файла не в базу, а в файл
 func saveDataFile(w http.ResponseWriter, r *http.Request, data models.Data, s store.Store) ResponseType {
 	var err error
 

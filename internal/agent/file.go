@@ -16,6 +16,7 @@ import (
 	"time"
 )
 
+// FileStageType модель формы файла пользователя.
 type FileStageType struct {
 	LoginPasswordStageType
 	filepicker   filepicker.Model
@@ -24,18 +25,22 @@ type FileStageType struct {
 	err          error
 }
 
+// Сообщение очистки ошибки.
 type clearErrorMsg struct{}
 
+// clearErrorAfter команда очистки ошибки.
 func clearErrorAfter(t time.Duration) tea.Cmd {
 	return tea.Tick(t, func(_ time.Time) tea.Msg {
 		return clearErrorMsg{}
 	})
 }
 
+// Init инициализирует модель.
 func (m *FileStageType) Init() tea.Cmd {
 	return nil
 }
 
+// Update обрабатывает события пользователя.
 func (m *FileStageType) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	if m.recordID != "" {
 		return m, func() tea.Msg {
@@ -81,6 +86,7 @@ func (m *FileStageType) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	return m, cmd
 }
 
+// View отображает форму в терминале.
 func (m *FileStageType) View() string {
 	if m.quitting {
 		return ""
@@ -103,6 +109,7 @@ func (m *FileStageType) View() string {
 	return s.String()
 }
 
+// Prepare подготавливает модель для отображения.
 func (m *FileStageType) Prepare(a *agent) {
 	m.back = "operation_list"
 	m.client = a.client
@@ -133,6 +140,7 @@ func (m *FileStageType) Prepare(a *agent) {
 	f.Write(data.Body)
 }
 
+// save отправляет данные формы на сервер.
 func (m *FileStageType) save() (tea.Model, tea.Cmd) {
 	body, err := os.ReadFile(m.selectedFile)
 
