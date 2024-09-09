@@ -37,12 +37,12 @@ jobs:
     - name: Build agent
       run: |
           cd cmd/agent
-          go build .
+          go build -buildvcs=false -o server
     
     - name: Build server
       run: |
           cd cmd/server
-          go build .
+          go build -buildvcs=false -o server
 
     - name: Test
       run: go test -v ./...
