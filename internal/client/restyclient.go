@@ -46,51 +46,6 @@ func (c *RestyClient) SetUserID(userID string) {
 	c.userID = userID
 }
 
-// Send отправляет данные на сервер.
-func (c *RestyClient) Send(ctx context.Context, url string, headers map[string]string, data []byte, method string) APIServiceResult {
-	result := APIServiceResult{}
-	log.Println("source data: ", string(data))
-	var err error
-	dataForSend, err := c.prepareDataForSend(data)
-
-	if err != nil {
-		return result
-	}
-
-	ctxt, cancel := context.WithTimeout(ctx, time.Second*5)
-	defer cancel()
-
-	request := c.client.R().
-		SetContext(ctxt).
-		SetBody(dataForSend).
-		SetError(&result.Error).
-		SetHeader("Content-Type", "application/json").
-		SetHeader("Content-Encoding", "gzip")
-
-	for name, value := range headers {
-		request.SetHeader(name, value)
-	}
-
-	var response *resty.Response
-
-	switch method {
-	case "PUT":
-		response, err = request.Put(url)
-	default:
-		response, err = request.Post(url)
-	}
-
-	if err != nil {
-		result.Error = err
-	}
-
-	result.Response = response.Body()
-	result.Code = response.StatusCode()
-	result.Token = response.Header().Get("Authorization")
-
-	return result
-}
-
 func (c *RestyClient) Get(ctx context.Context, headers map[string]string, data []byte) APIServiceResult {
 	result := APIServiceResult{}
 	log.Println("source data: ", string(data))

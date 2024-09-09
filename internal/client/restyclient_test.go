@@ -1,7 +1,6 @@
 package client
 
 import (
-	"context"
 	"encoding/base64"
 	"github.com/go-resty/resty/v2"
 	"testing"
@@ -103,55 +102,6 @@ func TestRestyClient_Compress(t *testing.T) {
 			gotStr := base64.StdEncoding.EncodeToString(got)
 			if gotStr != tt.want {
 				t.Errorf("Compress() got = %v, want %v", got, tt.want)
-			}
-		})
-	}
-}
-
-func TestRestyClient_Send(t *testing.T) {
-	type fields struct {
-		client *resty.Client
-		userID string
-	}
-	type args struct {
-		ctx     context.Context
-		url     string
-		headers map[string]string
-		data    []byte
-		method  string
-	}
-	tests := []struct {
-		name   string
-		fields fields
-		args   args
-		want   APIServiceResult
-	}{
-		{
-			name: "positive test 1",
-			fields: fields{
-				client: resty.New(),
-				userID: "111",
-			},
-			args: args{
-				ctx:     context.Background(),
-				url:     "http://localhost:8080/api/user/login",
-				headers: map[string]string{},
-				data:    []byte("{\"user_name\":\"n\",\"password\":\"123\"}"),
-				method:  "POST",
-			},
-			want: APIServiceResult{
-				Code: 200,
-			},
-		},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			c := &RestyClient{
-				client: tt.fields.client,
-				userID: tt.fields.userID,
-			}
-			if got := c.Send(tt.args.ctx, tt.args.url, tt.args.headers, tt.args.data, tt.args.method); got.Code != tt.want.Code {
-				t.Errorf("Send() = %v, want %v", got, tt.want)
 			}
 		})
 	}
