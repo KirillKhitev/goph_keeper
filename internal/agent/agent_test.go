@@ -179,7 +179,7 @@ func createTestFile(t *testing.T) *os.File {
 		t.Fatalf("ошибка создания папки users: %s", err)
 	}
 
-	path := "users" + string(os.PathSeparator) + "test_user.txt"
+	path := "users" + string(os.PathSeparator) + "test_user"
 	file, err := os.Create(path)
 	if err != nil {
 		t.Fatalf("ошибка при создании файла %s: %s", path, err)
