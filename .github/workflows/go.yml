@@ -1,0 +1,48 @@
+# This workflow will build a golang project
+# For more information see: https://docs.github.com/en/actions/automating-builds-and-tests/building-and-testing-go
+
+name: Go
+
+on:
+  pull_request:
+  push:
+    branches:
+      - master
+jobs:
+
+  build:
+    runs-on: ubuntu-latest
+    container: golang:1.21
+
+    services:
+      postgres:
+        image: postgres
+        env:
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: gk
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Set up Go
+      uses: actions/setup-go@v4
+      with:
+        go-version: '1.20'
+
+    - name: Build agent
+      run: |
+          cd cmd/agent
+          go build .
+    
+    - name: Build server
+      run: |
+          cd cmd/server
+          go build .
+
+    - name: Test
+      run: go test -v ./...
