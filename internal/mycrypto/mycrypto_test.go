@@ -7,9 +7,16 @@ import (
 	"testing"
 )
 
-func createTestFile() *os.File {
-	os.Mkdir("users", 777)
-	file, _ := os.Create("users/test_user.txt")
+func createTestFile(t *testing.T) *os.File {
+	err := os.Mkdir("users", 777)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	file, err := os.Create("users/test_user.txt")
+	if err != nil {
+		t.Fatal(err)
+	}
 
 	key := []uint8{168, 49, 93, 155, 71, 68, 144, 227, 208, 250, 186, 149, 211, 116, 214, 100}
 
@@ -20,7 +27,7 @@ func createTestFile() *os.File {
 	return file
 }
 
-func createWrongFile() *os.File {
+func createWrongFile(t *testing.T) *os.File {
 	os.Mkdir("users", 777)
 	file, _ := os.Create("users/wrong_file.txt")
 
@@ -34,8 +41,8 @@ func createWrongFile() *os.File {
 }
 
 func TestEncrypt(t *testing.T) {
-	f := createTestFile()
-	fw := createWrongFile()
+	f := createTestFile(t)
+	fw := createWrongFile(t)
 
 	defer func() {
 		f.Close()
@@ -107,8 +114,8 @@ func TestEncrypt(t *testing.T) {
 }
 
 func TestDecrypt(t *testing.T) {
-	f := createTestFile()
-	fw := createWrongFile()
+	f := createTestFile(t)
+	fw := createWrongFile(t)
 	defer func() {
 		f.Close()
 		fw.Close()

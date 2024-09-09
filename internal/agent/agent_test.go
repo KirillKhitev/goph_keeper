@@ -70,14 +70,6 @@ func (c *ClientForTests) Get(ctx context.Context, headers map[string]string, dat
 		})
 	}
 
-	//myReader := bytes.NewReader(data)
-	//
-	//r := httptest.NewRequest(http.MethodPost, "/api/data/get", myReader)
-	//for h, v := range headers{
-	//	r.Header.Set(h, v)
-	//}
-	//
-
 	b, _ := mycrypto.Encrypt(existdata.Body, dataRequest.UserID)
 	existdata.Body = b
 
