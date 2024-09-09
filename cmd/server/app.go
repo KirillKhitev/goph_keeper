@@ -50,6 +50,19 @@ func (a *app) Close() error {
 func (a *app) StartServer() error {
 	log.Printf("Running server: %v", config.ConfigServer)
 
+	r := a.getRouter()
+
+	handler := gzip.Middleware(r)
+
+	a.server = http.Server{
+		Addr:    config.ConfigServer.AddrRun,
+		Handler: handler,
+	}
+
+	return a.server.ListenAndServe()
+}
+
+func (a *app) getRouter() chi.Router {
 	r := chi.NewRouter()
 
 	r.Route("/api/user", func(r chi.Router) {
@@ -73,14 +86,7 @@ func (a *app) StartServer() error {
 		})
 	})
 
-	handler := gzip.Middleware(r)
-
-	a.server = http.Server{
-		Addr:    config.ConfigServer.AddrRun,
-		Handler: handler,
-	}
-
-	return a.server.ListenAndServe()
+	return r
 }
 
 // shutdownServer останавливает сервер.
