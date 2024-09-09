@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/KirillKhitev/goph_keeper/internal/config"
 	"github.com/KirillKhitev/goph_keeper/internal/models"
 	"github.com/KirillKhitev/goph_keeper/internal/mycrypto"
 	"log"
@@ -92,9 +91,7 @@ func (m *CreditCardStageType) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 		//Назад
 		case "ctrl+b":
-			return m, func() tea.Msg {
-				return openList{}
-			}
+			return m, OpenListMsg
 
 		//Сохранить
 		case "ctrl+s":
@@ -164,12 +161,11 @@ func (m *CreditCardStageType) save() (tea.Model, tea.Cmd) {
 	bytes, _ := json.Marshal(data)
 
 	ctx := context.Background()
-	url := fmt.Sprintf("http://%s/api/data/update", config.ConfigClient.AddrServer)
 	headers := map[string]string{
 		"Authorization": m.token,
 	}
 
-	response := (*m.client).Send(ctx, url, headers, bytes, "PUT")
+	response := (*m.client).Update(ctx, headers, bytes)
 
 	if response.Code != 200 {
 		return m, func() tea.Msg {
@@ -181,9 +177,7 @@ func (m *CreditCardStageType) save() (tea.Model, tea.Cmd) {
 		}
 	}
 
-	return m, func() tea.Msg {
-		return openList{}
-	}
+	return m, OpenListMsg
 }
 
 // ccnValidator валидирует номер карты.

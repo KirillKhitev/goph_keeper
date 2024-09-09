@@ -76,7 +76,7 @@ func GetData(w http.ResponseWriter, r *http.Request, userID string, s store.Stor
 
 	if !ok {
 		return ResponseType{
-			LogMsg: fmt.Sprintf("%s: this recod is not exist!", ListDataErrPrefix, userID, err),
+			LogMsg: fmt.Sprintf("%s: this recod is not exist for user [%s] - %v", ListDataErrPrefix, userID, err),
 			Code:   http.StatusInternalServerError,
 		}
 	}

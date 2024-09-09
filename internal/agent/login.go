@@ -7,7 +7,6 @@ import (
 	"github.com/KirillKhitev/goph_keeper/internal/api"
 	"github.com/KirillKhitev/goph_keeper/internal/auth"
 	"github.com/KirillKhitev/goph_keeper/internal/client"
-	"github.com/KirillKhitev/goph_keeper/internal/config"
 	"github.com/charmbracelet/bubbles/textinput"
 	tea "github.com/charmbracelet/bubbletea"
 	"log"
@@ -124,9 +123,7 @@ func (m *LoginStageType) process() (tea.Model, tea.Cmd) {
 	bytes, _ := json.Marshal(data)
 
 	ctx := context.TODO()
-	url := fmt.Sprintf("http://%s/api/user/login", config.ConfigClient.AddrServer)
-
-	response := (*m.client).Send(ctx, url, make(map[string]string), bytes, "POST")
+	response := (*m.client).Login(ctx, bytes)
 	result := api.UserAuthBody{}
 
 	if err := json.Unmarshal(response.Response, &result); err != nil {

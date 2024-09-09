@@ -3,8 +3,6 @@ package agent
 import (
 	"context"
 	"encoding/json"
-	"fmt"
-	"github.com/KirillKhitev/goph_keeper/internal/config"
 	"github.com/KirillKhitev/goph_keeper/internal/models"
 	"github.com/KirillKhitev/goph_keeper/internal/mycrypto"
 	"log"
@@ -110,7 +108,6 @@ func getRecordDataFromServer[T any](m FormStageType, data models.Data, body T) (
 	}
 
 	ctx := context.TODO()
-	url := fmt.Sprintf("http://%s/api/data/get", config.ConfigClient.AddrServer)
 	headers := map[string]string{
 		"Authorization": m.getToken(),
 	}
@@ -118,7 +115,7 @@ func getRecordDataFromServer[T any](m FormStageType, data models.Data, body T) (
 	bytes, _ := json.Marshal(data)
 
 	clientHTTP := m.getClient()
-	response = (*clientHTTP).Send(ctx, url, headers, bytes, "POST")
+	response = (*clientHTTP).Get(ctx, headers, bytes)
 
 	err := json.Unmarshal(response.Response, &data)
 	if err != nil {
@@ -223,12 +220,11 @@ func (m *LoginPasswordStageType) save() (tea.Model, tea.Cmd) {
 	bytes, _ := json.Marshal(data)
 
 	ctx := context.TODO()
-	url := fmt.Sprintf("http://%s/api/data/update", config.ConfigClient.AddrServer)
 	headers := map[string]string{
 		"Authorization": m.token,
 	}
 
-	response := (*m.client).Send(ctx, url, headers, bytes, "PUT")
+	response := (*m.client).Update(ctx, headers, bytes)
 
 	if response.Code != 200 {
 		return m, func() tea.Msg {

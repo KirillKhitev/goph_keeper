@@ -74,6 +74,10 @@ func (a agent) Init() tea.Cmd {
 	return tea.Batch(cmds...)
 }
 
+var OpenListMsg = func() tea.Msg {
+	return openList{}
+}
+
 // Prepare подготавливает модель.
 func (a agent) Prepare(agent *agent) {
 
@@ -193,7 +197,7 @@ func newClient() (client.Client, error) {
 	return client.NewRestyClient()
 }
 
-// catchTerminateSignal ловит сигналы ОС для корректной остановки агента.
+// CatchTerminateSignal ловит сигналы ОС для корректной остановки агента.
 func (a *agent) CatchTerminateSignal() error {
 	terminateSignals := make(chan os.Signal, 1)
 

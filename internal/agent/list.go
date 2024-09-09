@@ -3,9 +3,7 @@ package agent
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 	"github.com/KirillKhitev/goph_keeper/internal/client"
-	"github.com/KirillKhitev/goph_keeper/internal/config"
 	"github.com/KirillKhitev/goph_keeper/internal/models"
 	"github.com/charmbracelet/bubbles/list"
 	tea "github.com/charmbracelet/bubbletea"
@@ -57,11 +55,9 @@ func (m *ListStageType) Prepare(a *agent) {
 	m.List.Title = "Мои записи"
 
 	ctx := context.TODO()
-	url := fmt.Sprintf("http://%s/api/data/list", config.ConfigClient.AddrServer)
-
-	response := (*m.client).Send(ctx, url, map[string]string{
+	response := (*m.client).List(ctx, map[string]string{
 		"Authorization": a.token,
-	}, []byte{}, "POST")
+	})
 
 	var result []models.Data
 

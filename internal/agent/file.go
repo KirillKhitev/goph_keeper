@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/KirillKhitev/goph_keeper/internal/config"
 	"github.com/KirillKhitev/goph_keeper/internal/models"
 	"github.com/KirillKhitev/goph_keeper/internal/mycrypto"
 	"github.com/charmbracelet/bubbles/filepicker"
@@ -73,7 +72,7 @@ func (m *FileStageType) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
 		switch msg.String() {
-		case "ctrl+c", "q":
+		case "ctrl+c", "esc":
 			m.quitting = true
 			return m, tea.Quit
 		case "enter":
@@ -130,7 +129,9 @@ func (m *FileStageType) Prepare(a *agent) {
 	path := "files" + string(os.PathSeparator) + string(data.Name)
 
 	f, err := os.Create(path)
-	defer f.Close()
+	defer func() {
+		f.Close()
+	}()
 
 	if err != nil {
 		log.Printf("ошибка при создании файла[%s]: %s", data.Name, err)
@@ -169,6 +170,8 @@ func (m *FileStageType) save() (tea.Model, tea.Cmd) {
 		}
 	}
 
+	defer f.Close()
+
 	file, _ := f.Stat()
 
 	data := models.Data{
@@ -185,12 +188,11 @@ func (m *FileStageType) save() (tea.Model, tea.Cmd) {
 	bytes, _ := json.Marshal(data)
 
 	ctx := context.TODO()
-	url := fmt.Sprintf("http://%s/api/data/update", config.ConfigClient.AddrServer)
 	headers := map[string]string{
 		"Authorization": m.token,
 	}
 
-	response := (*m.client).Send(ctx, url, headers, bytes, "PUT")
+	response := (*m.client).Update(ctx, headers, bytes)
 
 	if response.Code != 200 {
 		return m, func() tea.Msg {
