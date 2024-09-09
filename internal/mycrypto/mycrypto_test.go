@@ -10,12 +10,13 @@ import (
 func createTestFile(t *testing.T) *os.File {
 	err := os.Mkdir("users", 777)
 	if err != nil {
-		t.Fatal(err)
+		t.Fatalf("ошибка создания папки users: %w", err)
 	}
 
-	file, err := os.Create("users/test_user.txt")
+	path := "users" + string(os.PathSeparator) + "test_user.txt"
+	file, err := os.Create(path)
 	if err != nil {
-		t.Fatal(err)
+		t.Fatalf("ошибка при создании файла %s: %w", path, err)
 	}
 
 	key := []uint8{168, 49, 93, 155, 71, 68, 144, 227, 208, 250, 186, 149, 211, 116, 214, 100}

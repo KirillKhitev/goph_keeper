@@ -173,9 +173,17 @@ func (c *ClientForTests) Close() error {
 	return nil
 }
 
-func createTestFile() *os.File {
-	os.Mkdir("users", 777)
-	file, _ := os.Create("users/test_user")
+func createTestFile(t *testing.T) *os.File {
+	err := os.Mkdir("users", 777)
+	if err != nil {
+		t.Fatalf("ошибка создания папки users: %w", err)
+	}
+
+	path := "users" + string(os.PathSeparator) + "test_user.txt"
+	file, err := os.Create(path)
+	if err != nil {
+		t.Fatalf("ошибка при создании файла %s: %w", path, err)
+	}
 
 	key := []uint8{168, 49, 93, 155, 71, 68, 144, 227, 208, 250, 186, 149, 211, 116, 214, 100}
 
@@ -187,7 +195,7 @@ func createTestFile() *os.File {
 }
 
 func TestCreditCardStageType_Prepare(t *testing.T) {
-	f := createTestFile()
+	f := createTestFile(t)
 
 	defer func() {
 		f.Close()
@@ -260,7 +268,7 @@ func TestCreditCardStageType_Prepare(t *testing.T) {
 }
 
 func TestCreditCardStageType_Update(t *testing.T) {
-	f := createTestFile()
+	f := createTestFile(t)
 
 	defer func() {
 		f.Close()
@@ -415,7 +423,7 @@ func TestCreditCardStageType_Update(t *testing.T) {
 }
 
 func TestCreditCardStageType_save(t *testing.T) {
-	f := createTestFile()
+	f := createTestFile(t)
 
 	defer func() {
 		f.Close()
@@ -1252,7 +1260,7 @@ func TestLoginPasswordStageType_Init(t *testing.T) {
 }
 
 func TestLoginPasswordStageType_Prepare(t *testing.T) {
-	f := createTestFile()
+	f := createTestFile(t)
 
 	defer func() {
 		f.Close()
@@ -1294,7 +1302,7 @@ func TestLoginPasswordStageType_Prepare(t *testing.T) {
 }
 
 func TestLoginPasswordStageType_Update(t *testing.T) {
-	f := createTestFile()
+	f := createTestFile(t)
 
 	defer func() {
 		f.Close()
@@ -1364,7 +1372,7 @@ func TestLoginPasswordStageType_Update(t *testing.T) {
 }
 
 func TestLoginPasswordStageType_View(t *testing.T) {
-	f := createTestFile()
+	f := createTestFile(t)
 
 	defer func() {
 		f.Close()
@@ -1491,7 +1499,7 @@ func TestLoginPasswordStageType_getToken(t *testing.T) {
 }
 
 func TestLoginPasswordStageType_save(t *testing.T) {
-	f := createTestFile()
+	f := createTestFile(t)
 
 	defer func() {
 		f.Close()
@@ -1991,7 +1999,7 @@ func TestRegisterStageType_Prepare(t *testing.T) {
 }
 
 func TestRegisterStageType_Update(t *testing.T) {
-	f := createTestFile()
+	f := createTestFile(t)
 
 	defer func() {
 		f.Close()
@@ -2378,7 +2386,7 @@ func TestTextStageType_View(t *testing.T) {
 }
 
 func TestTextStageType_getRecordDataFromServer(t *testing.T) {
-	f := createTestFile()
+	f := createTestFile(t)
 
 	defer func() {
 		f.Close()
@@ -2442,7 +2450,7 @@ func TestTextStageType_getRecordDataFromServer(t *testing.T) {
 }
 
 func TestTextStageType_save(t *testing.T) {
-	f := createTestFile()
+	f := createTestFile(t)
 
 	defer func() {
 		f.Close()
