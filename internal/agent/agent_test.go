@@ -796,7 +796,7 @@ func TestFileStageType_Update(t *testing.T) {
 
 			m.Prepare(app)
 			m.recordID = ""
-			m.selectedFile = "files\\test_file.txt"
+			m.selectedFile = "files" + string(os.PathSeparator) + "test_file.txt"
 
 			for _, msg := range tt.args.msgs {
 				_, got := m.Update(msg.(tea.KeyMsg))
