@@ -37,10 +37,42 @@ jobs:
     - name: Install dependencies
       run: go mod download
 
-    - name: Build agent
+    - name: Build agent linux
       run: |
           cd cmd/agent
-          go build -buildvcs=false -o agent
+          go build -ldflags "-X main.buildVersion=$(date +'%Y%m%d') -X main.buildDate=$(date +'%Y-%m-%dT%H:%M:%S')" -buildvcs=false -o agent
+    - name: zip linux artifact
+      run: |
+          zip linux out/agent
+    - name: upload linux artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: uploads
+        path: linux.zip
+
+    - name: Build agent macos
+      run: |
+        go build -ldflags "-X main.buildVersion=$(date +'%Y%m%d') -X main.buildDate=$(date +'%Y-%m-%dT%H:%M:%S')" -buildvcs=false -o agent.sh
+    - name: zip macos artifact
+      run: |
+        zip macos out/agent.sh
+    - name: upload macos artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: uploads
+        path: macos.zip
+
+    - name: Build agent windows
+      run: |
+        go build -ldflags "-X main.buildVersion=$(date +'%Y%m%d') -X main.buildDate=$(date +'%Y-%m-%dT%H:%M:%S')" -buildvcs=false -o agent.exe
+    - name: zip win artifact
+      run: |
+        powershell Compress-Archive out windows.zip
+    - name: upload windows artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: uploads
+        path: windows.zip
     
     - name: Build server
       run: |
@@ -55,107 +87,49 @@ jobs:
       with:
         token: ${{ secrets.CODECOV_TOKEN }}
 
-  upload-release:
-    runs-on: ubuntu-latest
-    needs: [ build-macos, build-linux, build-windows ]
 
-    steps:
-      - uses: actions/checkout@v4
-      - name: create release
-        id: create_release
-        uses: actions/create-release@master
-        env:
-          GITHUB_TOKEN: ${{ secrets.TOKEN }}
-        with:
-          tag_name: ${{ github.ref }}
-          release_name: Release ${{ github.ref }}
-          draft: false
-          prerelease: false
-      - name: download artifacts
-        uses: actions/download-artifact@v4
-        with:
-          name: uploads
-      - name: upload macos
-        id: upload-macos
-        uses: actions/upload-release-asset@v1.0.1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./uploads/macos.zip
-          asset_name: macos.zip
-          asset_content_type: application/zip
-      - name: upload linux
-        id: upload-linux
-        uses: actions/upload-release-asset@v1.0.1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./uploads/linux.zip
-          asset_name: linux.zip
-          asset_content_type: application/zip
-      - name: upload windows
-        id: upload-windows
-        uses: actions/upload-release-asset@v1.0.1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./uploads/windows.zip
-          asset_name: windows.zip
-          asset_content_type: application/zip
 
-  build-macos:
-    runs-on: macOS-latest
-    container: golang:1.23
-
-    steps:
-      - name: Build agent
-        run: |
-          cd cmd/agent
-          go build -ldflags "-X main.buildVersion=$(date +'%Y%m%d') -X main.buildDate=$(date +'%Y-%m-%dT%H:%M:%S')" -buildvcs=false
-      - name: zip macos artifact
-        run: |
-          zip -r macos out
-      - name: upload macos artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: uploads
-          path: macos.zip
-
-  build-linux:
-    runs-on: ubuntu-latest
-    container: golang:1.23
-
-    steps:
-      - name: Build agent
-        run: |
-          cd cmd/agent
-          go build -ldflags "-X main.buildVersion=$(date +'%Y%m%d') -X main.buildDate=$(date +'%Y-%m-%dT%H:%M:%S')" -buildvcs=false
-      - name: zip linux artifact
-        run: |
-          zip -r linux out
-      - name: upload linux artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: uploads
-          path: linux.zip
-
-  build-windows:
-    runs-on: windows-latest
-    container: golang:1.23
-
-    steps:
-      - name: Build agent
-        run: |
-          cd cmd/agent
-          go build -ldflags "-X main.buildVersion=$(date +'%Y%m%d') -X main.buildDate=$(date +'%Y-%m-%dT%H:%M:%S')" -buildvcs=false
-      - name: zip win artifact
-        run: |
-          powershell Compress-Archive out windows.zip
-      - name: upload windows artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: uploads
-          path: windows.zip
+    - name: create release
+      id: create_release
+      uses: actions/create-release@master
+      env:
+        GITHUB_TOKEN: ${{ secrets.TOKEN }}
+      with:
+        tag_name: ${{ github.ref }}
+        release_name: Release ${{ github.ref }}
+        draft: false
+        prerelease: false
+    - name: download artifacts
+      uses: actions/download-artifact@v4
+      with:
+        name: uploads
+    - name: upload macos
+      id: upload-macos
+      uses: actions/upload-release-asset@v1.0.1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ steps.create_release.outputs.upload_url }}
+        asset_path: ./uploads/macos.zip
+        asset_name: macos.zip
+        asset_content_type: application/zip
+    - name: upload linux
+      id: upload-linux
+      uses: actions/upload-release-asset@v1.0.1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ steps.create_release.outputs.upload_url }}
+        asset_path: ./uploads/linux.zip
+        asset_name: linux.zip
+        asset_content_type: application/zip
+    - name: upload windows
+      id: upload-windows
+      uses: actions/upload-release-asset@v1.0.1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ steps.create_release.outputs.upload_url }}
+        asset_path: ./uploads/windows.zip
+        asset_name: windows.zip
+        asset_content_type: application/zip
