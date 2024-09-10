@@ -45,42 +45,33 @@ jobs:
     - name: Build agent linux
       run: |
           cd cmd/agent
-          go build -ldflags "-X main.buildVersion=$VERSION -X main.buildDate=$NOW" -buildvcs=false -o agent
-    - name: zip linux artifact
-      run: |
-        tar -czvf linux_agent.tar.gz cmd/agent/agent
+          go build -ldflags "-X main.buildVersion=$VERSION -X main.buildDate=$NOW" -buildvcs=false -o linux_agent
     - name: upload linux artifact
       uses: actions/upload-artifact@v4
       with:
         name: linux_agent
-        path: linux_agent.tar.gz
+        path: cmd/agent/linux_agent
 
     - name: Build agent macos
       run: |
         cd cmd/agent
-        env GOOS=darwin GOARCH=amd64 go build -ldflags "-X main.buildVersion=$VERSION -X main.buildDate=$NOW" -buildvcs=false -o agent.sh
+        env GOOS=darwin GOARCH=amd64 go build -ldflags "-X main.buildVersion=$VERSION -X main.buildDate=$NOW" -buildvcs=false -o macos_agent.sh
         ls -lh
-    - name: zip macos artifact
-      run: |
-        tar -czvf macos_agent.tar.gz cmd/agent/agent.sh
     - name: upload macos artifact
       uses: actions/upload-artifact@v4
       with:
         name: macos_agent
-        path: macos_agent.tar.gz
+        path: cmd/agent/macos_agent.sh
 
     - name: Build agent windows
       run: |
         cd cmd/agent
-        env GOOS=windows GOARCH=amd64 go build -ldflags "-X main.buildVersion=$VERSION -X main.buildDate=$NOW" -buildvcs=false -o agent.exe
-    - name: zip win artifact
-      run: |
-        tar -czvf windows_agent.tar.gz cmd/agent/agent.exe
+        env GOOS=windows GOARCH=amd64 go build -ldflags "-X main.buildVersion=$VERSION -X main.buildDate=$NOW" -buildvcs=false -o windows_agent.exe
     - name: upload windows artifact
       uses: actions/upload-artifact@v4
       with:
         name: windows_agent
-        path: windows_agent.tar.gz
+        path: windows_agent.exe
 
     - name: Build server
       run: |
@@ -94,50 +85,3 @@ jobs:
       uses: codecov/codecov-action@v4
       with:
         token: ${{ secrets.CODECOV_TOKEN }}
-
-
-
-    - name: create release
-      id: create_release
-      uses: actions/create-release@master
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      with:
-        tag_name: ${{ github.ref }}
-        release_name: Release ${{ github.ref }}
-        draft: false
-        prerelease: false
-    - name: download artifacts
-      uses: actions/download-artifact@v4
-      with:
-        name: uploads
-    - name: upload macos
-      id: upload-macos
-      uses: actions/upload-release-asset@v1.0.1
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      with:
-        upload_url: ${{ steps.create_release.outputs.upload_url }}
-        asset_path: ./uploads/macos_agent.tar.gz
-        asset_name: macos_agent.tar.gz
-        asset_content_type: application/gzip
-    - name: upload linux
-      id: upload-linux
-      uses: actions/upload-release-asset@v1.0.1
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      with:
-        upload_url: ${{ steps.create_release.outputs.upload_url }}
-        asset_path: ./uploads/linux_agent.tar.gz
-        asset_name: linux_agent.tar.gz
-        asset_content_type: application/gzip
-    - name: upload windows
-      id: upload-windows
-      uses: actions/upload-release-asset@v1.0.1
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      with:
-        upload_url: ${{ steps.create_release.outputs.upload_url }}
-        asset_path: ./uploads/windows_agent.tar.gz
-        asset_name: windows_agent.tar.gz
-        asset_content_type: application/gzip
