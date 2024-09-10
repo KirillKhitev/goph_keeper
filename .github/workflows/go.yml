@@ -71,7 +71,7 @@ jobs:
       uses: actions/upload-artifact@v4
       with:
         name: windows_agent
-        path: windows_agent.exe
+        path: cmd/agent/windows_agent.exe
 
     - name: Build server
       run: |
