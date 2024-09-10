@@ -60,9 +60,9 @@ jobs:
     runs-on: macOS-latest
 
     steps:
-      - name: Build client
+      - name: Build agent
         run: |
-          cd cmd/client
+          cd cmd/agent
           go build -ldflags "-X main.buildVersion=$(date +'%Y%m%d') -X main.buildDate=$(date +'%Y-%m-%dT%H:%M:%S')" -buildvcs=false
       - name: zip macos artifact
         run: |
@@ -77,9 +77,9 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Build client
+      - name: Build agent
         run: |
-          cd cmd/client
+          cd cmd/agent
           go build -ldflags "-X main.buildVersion=$(date +'%Y%m%d') -X main.buildDate=$(date +'%Y-%m-%dT%H:%M:%S')" -buildvcs=false
       - name: zip linux artifact
         run: |
@@ -94,9 +94,9 @@ jobs:
     runs-on: windows-latest
 
     steps:
-      - name: Build client
+      - name: Build agent
         run: |
-          cd cmd/client
+          cd cmd/agent
           go build -ldflags "-X main.buildVersion=$(date +'%Y%m%d') -X main.buildDate=$(date +'%Y-%m-%dT%H:%M:%S')" -buildvcs=false
       - name: zip win artifact
         run: |
