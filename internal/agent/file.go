@@ -175,11 +175,11 @@ func (m *FileStageType) save() (tea.Model, tea.Cmd) {
 
 	file, _ := f.Stat()
 
-	if file.Size() > 1073741824 {
+	if file.Size() > 10737418240 {
 		return m, func() tea.Msg {
 			log.Println("save ", m.selectedFile, err)
 			return infoMsg{
-				message:    fmt.Sprintf("Файл не может быть больше 1Гб"),
+				message:    fmt.Sprintf("Файл не может быть больше 10Гб"),
 				back:       "file",
 				backButton: "Назад",
 			}
