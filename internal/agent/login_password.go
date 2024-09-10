@@ -31,6 +31,8 @@ type LoginPasswordStageType struct {
 	inputs     []textinput.Model
 	back       string
 	client     *client.Client
+	recordID   string
+	token      string
 }
 
 // getClient возвращает http-клиент.

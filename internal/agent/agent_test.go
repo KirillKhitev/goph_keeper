@@ -2049,6 +2049,16 @@ func TestRegisterStageType_Update(t *testing.T) {
 			},
 			want: "agent.authSuccessMsg",
 		},
+		{
+			name: "positive test #4",
+			args: args{
+				msgs: []tea.Msg{
+					tea.KeyMsg{Type: tea.KeyUp},
+				},
+				focusIndex: 2,
+			},
+			want: "cursor.BlinkMsg",
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -2341,6 +2351,15 @@ func TestTextStageType_Update(t *testing.T) {
 				},
 			},
 			want: "agent.openList",
+		},
+		{
+			name: "positive test #3",
+			args: args{
+				msgs: []tea.Msg{
+					tea.KeyMsg{Type: tea.KeyTab},
+				},
+			},
+			want: "cursor.BlinkMsg",
 		},
 	}
 	for _, tt := range tests {
@@ -2648,7 +2667,31 @@ func Test_ccnValidator(t *testing.T) {
 		args    args
 		wantErr bool
 	}{
-		// TODO: Add test cases.
+		{
+			name: "positive test #1",
+			args: args{
+				s: "1234 1231 1234 3455",
+			},
+			wantErr: false,
+		},
+		{
+			name: "negative test #2",
+			args: args{
+				s: "1234 1231 1234 3455 df",
+			},
+			wantErr: true,
+		},
+		{
+			name:    "negative test #3",
+			wantErr: true,
+		},
+		{
+			name: "negative test #4",
+			args: args{
+				s: "12341 23112 343",
+			},
+			wantErr: true,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -2666,14 +2709,22 @@ func Test_clearErrorAfter(t *testing.T) {
 	tests := []struct {
 		name string
 		args args
-		want tea.Cmd
+		want string
 	}{
-		// TODO: Add test cases.
+		{
+			name: "positive test #1",
+			args: args{
+				t: 1 * time.Second,
+			},
+			want: "agent.clearErrorMsg",
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if got := clearErrorAfter(tt.args.t); !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("clearErrorAfter() = %v, want %v", got, tt.want)
+			got := clearErrorAfter(tt.args.t)
+
+			if fmt.Sprintf("%T", got()) != tt.want {
+				t.Errorf("clearErrorAfter() = %T, want %s", got(), tt.want)
 			}
 		})
 	}
@@ -2688,7 +2739,13 @@ func Test_cvvValidator(t *testing.T) {
 		args    args
 		wantErr bool
 	}{
-		// TODO: Add test cases.
+		{
+			name: "positive test #1",
+			args: args{
+				s: "505",
+			},
+			wantErr: false,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -2709,7 +2766,14 @@ func Test_errMsg_Error(t *testing.T) {
 		fields fields
 		want   string
 	}{
-		// TODO: Add test cases.
+		{
+			name: "positive test #1",
+			fields: fields{
+				error: errors.New("test error"),
+				back:  "Назад",
+			},
+			want: "test error",
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -2733,7 +2797,27 @@ func Test_expValidator(t *testing.T) {
 		args    args
 		wantErr bool
 	}{
-		// TODO: Add test cases.
+		{
+			name: "positive test #1",
+			args: args{
+				s: "06/30",
+			},
+			wantErr: false,
+		},
+		{
+			name: "nengative test #2",
+			args: args{
+				s: "s6/30",
+			},
+			wantErr: true,
+		},
+		{
+			name: "nengative test #3",
+			args: args{
+				s: "096/30",
+			},
+			wantErr: true,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -2744,38 +2828,71 @@ func Test_expValidator(t *testing.T) {
 	}
 }
 
-//func Test_getRecordDataFromServer(t *testing.T) {
-//	type args[T any] struct {
-//		m    FormStageType
-//		data models.Data
-//		body T
-//	}
-//	type testCase[T any] struct {
-//		name    string
-//		args    args[T]
-//		want    models.Data
-//		want1   T
-//		wantErr bool
-//	}
-//	tests := []testCase[ /* TODO: Insert concrete types here */ ]{
-//		// TODO: Add test cases.
-//	}
-//	for _, tt := range tests {
-//		t.Run(tt.name, func(t *testing.T) {
-//			got, got1, err := getRecordDataFromServer(tt.args.m, tt.args.data, tt.args.body)
-//			if (err != nil) != tt.wantErr {
-//				t.Errorf("getRecordDataFromServer() error = %v, wantErr %v", err, tt.wantErr)
-//				return
-//			}
-//			if !reflect.DeepEqual(got, tt.want) {
-//				t.Errorf("getRecordDataFromServer() got = %v, want %v", got, tt.want)
-//			}
-//			if !reflect.DeepEqual(got1, tt.want1) {
-//				t.Errorf("getRecordDataFromServer() got1 = %v, want %v", got1, tt.want1)
-//			}
-//		})
-//	}
-//}
+func Test_getRecordDataFromServer(t *testing.T) {
+	f := createTestFile(t)
+
+	defer func() {
+		f.Close()
+		os.RemoveAll("users")
+	}()
+
+	app, err := NewAgent()
+	clientT := NewClient()
+	app.client = &clientT
+	app.recordID = "exist_id"
+	app.token = "111"
+
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	type args[T any] struct {
+		m    FormStageType
+		data models.Data
+		body T
+	}
+	type testCase[T any] struct {
+		name    string
+		args    args[T]
+		want    models.Data
+		want1   T
+		wantErr bool
+	}
+	tests := []testCase[models.LoginBody]{
+		{
+			name: "positive test #1",
+			args: args[models.LoginBody]{
+				m: &LoginPasswordStageType{
+					recordID: app.recordID,
+					client:   app.client,
+					token:    app.token,
+				},
+				data: models.Data{
+					ID:     app.recordID,
+					UserID: "test_user",
+					Type:   "login_password",
+				},
+			},
+			want1: models.LoginBody{
+				Login:    "Login_test",
+				Password: "Login_pass",
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			_, gotBody, err := getRecordDataFromServer(tt.args.m, tt.args.data, models.LoginBody{})
+			if (err != nil) != tt.wantErr {
+				t.Errorf("getRecordDataFromServer() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+
+			if !reflect.DeepEqual(gotBody, tt.want1) {
+				t.Errorf("getRecordDataFromServer() gotBody = %v, want %v", gotBody, tt.want1)
+			}
+		})
+	}
+}
 
 func Test_listItem_Description(t *testing.T) {
 	type fields struct {
@@ -2897,7 +3014,11 @@ func Test_newClient(t *testing.T) {
 		want    client.Client
 		wantErr bool
 	}{
-		// TODO: Add test cases.
+		{
+			name:    "positive test #1",
+			want:    &client.RestyClient{},
+			wantErr: false,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -2906,8 +3027,8 @@ func Test_newClient(t *testing.T) {
 				t.Errorf("newClient() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
-			if !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("newClient() got = %v, want %v", got, tt.want)
+			if fmt.Sprintf("%T", got) != fmt.Sprintf("%T", tt.want) {
+				t.Errorf("newClient() got = %T, want %T", got, tt.want)
 			}
 		})
 	}
