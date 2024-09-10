@@ -37,10 +37,15 @@ jobs:
     - name: Install dependencies
       run: go mod download
 
+    - name: Set Variables
+      run: |
+        echo "NOW=$(date +'%Y-%m-%dT%H:%M:%S')" >> $GITHUB_ENV
+        echo "VERSION=$(date +'%Y%m%d')" >> $GITHUB_ENV
+
     - name: Build agent linux
       run: |
           cd cmd/agent
-          go build -ldflags "-X main.buildVersion=$(date +'%Y%m%d') -X main.buildDate=$(date +'%Y-%m-%dT%H:%M:%S')" -buildvcs=false -o linux_agent
+          go build -ldflags "-X main.buildVersion=$VERSION -X main.buildDate=$NOW" -buildvcs=false -o linux_agent
     - name: upload linux artifact
       uses: actions/upload-artifact@v4
       with:
@@ -49,7 +54,8 @@ jobs:
 
     - name: Build agent macos
       run: |
-        env GOOS=darwin GOARCH=amd64 go build -ldflags "-X main.buildVersion=$(date +'%Y%m%d') -X main.buildDate=$(date +'%Y-%m-%dT%H:%M:%S')" -buildvcs=false -o macos_agent.sh
+        cd cmd/agent
+        env GOOS=darwin GOARCH=amd64 go build -ldflags "-X main.buildVersion=$VERSION -X main.buildDate=$NOW" -buildvcs=false -o macos_agent.sh
 
     - name: upload macos artifact
       uses: actions/upload-artifact@v4
@@ -59,7 +65,8 @@ jobs:
 
     - name: Build agent windows
       run: |
-        env GOOS=windows GOARCH=amd64 go build -ldflags "-X main.buildVersion=$(date +'%Y%m%d') -X main.buildDate=$(date +'%Y-%m-%dT%H:%M:%S')" -buildvcs=false -o windows_agent.exe
+        cd cmd/agent
+        env GOOS=windows GOARCH=amd64 go build -ldflags "-X main.buildVersion=$VERSION -X main.buildDate=$NOW" -buildvcs=false -o windows_agent.exe
     - name: upload windows artifact
       uses: actions/upload-artifact@v4
       with:
