@@ -48,12 +48,12 @@ jobs:
           go build -ldflags "-X main.buildVersion=$VERSION -X main.buildDate=$NOW" -buildvcs=false -o agent
     - name: zip linux artifact
       run: |
-        zip linux_agent cmd/agent/agent
+        tar -czvf linux_agent.tar.gz cmd/agent/agent
     - name: upload linux artifact
       uses: actions/upload-artifact@v4
       with:
-        name: uploads
-        path: linux_agent.zip
+        name: linux_agent
+        path: linux_agent.tar.gz
 
     - name: Build agent macos
       run: |
@@ -62,12 +62,12 @@ jobs:
         ls -lh
     - name: zip macos artifact
       run: |
-        zip macos_agent cmd/agent/agent.sh
+        tar -czvf macos_agent.tar.gz cmd/agent/agent.sh
     - name: upload macos artifact
       uses: actions/upload-artifact@v4
       with:
-        name: uploads
-        path: macos_agent.zip
+        name: macos_agent
+        path: macos_agent.tar.gz
 
     - name: Build agent windows
       run: |
@@ -75,13 +75,13 @@ jobs:
         env GOOS=windows GOARCH=amd64 go build -ldflags "-X main.buildVersion=$VERSION -X main.buildDate=$NOW" -buildvcs=false -o agent.exe
     - name: zip win artifact
       run: |
-        zip windows_agent cmd/agent/agent.exe
+        tar -czvf windows_agent.tar.gz cmd/agent/agent.exe
     - name: upload windows artifact
       uses: actions/upload-artifact@v4
       with:
-        name: uploads
-        path: windows_agent.zip
-    
+        name: windows_agent
+        path: windows_agent.tar.gz
+
     - name: Build server
       run: |
           cd cmd/server
@@ -118,9 +118,9 @@ jobs:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
         upload_url: ${{ steps.create_release.outputs.upload_url }}
-        asset_path: ./uploads/macos_agent.zip
-        asset_name: macos_agent.zip
-        asset_content_type: application/zip
+        asset_path: ./uploads/macos_agent.tar.gz
+        asset_name: macos_agent.tar.gz
+        asset_content_type: application/gzip
     - name: upload linux
       id: upload-linux
       uses: actions/upload-release-asset@v1.0.1
@@ -128,9 +128,9 @@ jobs:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
         upload_url: ${{ steps.create_release.outputs.upload_url }}
-        asset_path: ./uploads/linux_agent.zip
-        asset_name: linux_agent.zip
-        asset_content_type: application/zip
+        asset_path: ./uploads/linux_agent.tar.gz
+        asset_name: linux_agent.tar.gz
+        asset_content_type: application/gzip
     - name: upload windows
       id: upload-windows
       uses: actions/upload-release-asset@v1.0.1
@@ -138,6 +138,6 @@ jobs:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
         upload_url: ${{ steps.create_release.outputs.upload_url }}
-        asset_path: ./uploads/windows_agent.zip
-        asset_name: windows_agent.zip
-        asset_content_type: application/zip
+        asset_path: ./uploads/windows_agent.tar.gz
+        asset_name: windows_agent.tar.gz
+        asset_content_type: application/gzip
