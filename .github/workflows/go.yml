@@ -40,39 +40,31 @@ jobs:
     - name: Build agent linux
       run: |
           cd cmd/agent
-          go build -ldflags "-X main.buildVersion=$(date +'%Y%m%d') -X main.buildDate=$(date +'%Y-%m-%dT%H:%M:%S')" -buildvcs=false -o agent
-    - name: zip linux artifact
-      run: |
-          zip linux out/agent
+          go build -ldflags "-X main.buildVersion=$(date +'%Y%m%d') -X main.buildDate=$(date +'%Y-%m-%dT%H:%M:%S')" -buildvcs=false -o linux_agent
     - name: upload linux artifact
       uses: actions/upload-artifact@v4
       with:
         name: uploads
-        path: linux.zip
+        path: linux_agent
 
     - name: Build agent macos
       run: |
-        go build -ldflags "-X main.buildVersion=$(date +'%Y%m%d') -X main.buildDate=$(date +'%Y-%m-%dT%H:%M:%S')" -buildvcs=false -o agent.sh
-    - name: zip macos artifact
-      run: |
-        zip macos out/agent.sh
+        env GOOS=darwin GOARCH=amd64 go build -ldflags "-X main.buildVersion=$(date +'%Y%m%d') -X main.buildDate=$(date +'%Y-%m-%dT%H:%M:%S')" -buildvcs=false -o macos_agent.sh
+
     - name: upload macos artifact
       uses: actions/upload-artifact@v4
       with:
         name: uploads
-        path: macos.zip
+        path: macos_agent.sh
 
     - name: Build agent windows
       run: |
-        go build -ldflags "-X main.buildVersion=$(date +'%Y%m%d') -X main.buildDate=$(date +'%Y-%m-%dT%H:%M:%S')" -buildvcs=false -o agent.exe
-    - name: zip win artifact
-      run: |
-        powershell Compress-Archive out windows.zip
+        env GOOS=windows GOARCH=amd64 go build -ldflags "-X main.buildVersion=$(date +'%Y%m%d') -X main.buildDate=$(date +'%Y-%m-%dT%H:%M:%S')" -buildvcs=false -o windows_agent.exe
     - name: upload windows artifact
       uses: actions/upload-artifact@v4
       with:
         name: uploads
-        path: windows.zip
+        path: windows_agent.exe
     
     - name: Build server
       run: |
@@ -110,9 +102,9 @@ jobs:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
         upload_url: ${{ steps.create_release.outputs.upload_url }}
-        asset_path: ./uploads/macos.zip
-        asset_name: macos.zip
-        asset_content_type: application/zip
+        asset_path: ./uploads/macos_agent.sh
+        asset_name: macos_agent.sh
+        asset_content_type: application/octet-stream
     - name: upload linux
       id: upload-linux
       uses: actions/upload-release-asset@v1.0.1
@@ -120,9 +112,9 @@ jobs:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
         upload_url: ${{ steps.create_release.outputs.upload_url }}
-        asset_path: ./uploads/linux.zip
-        asset_name: linux.zip
-        asset_content_type: application/zip
+        asset_path: ./uploads/linux_agent
+        asset_name: linux_agent
+        asset_content_type: application/octet-stream
     - name: upload windows
       id: upload-windows
       uses: actions/upload-release-asset@v1.0.1
@@ -130,6 +122,6 @@ jobs:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
         upload_url: ${{ steps.create_release.outputs.upload_url }}
-        asset_path: ./uploads/windows.zip
-        asset_name: windows.zip
-        asset_content_type: application/zip
+        asset_path: ./uploads/windows_agent.exe
+        asset_name: windows_agent.exe
+        asset_content_type: application/octet-stream
