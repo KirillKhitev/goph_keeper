@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/KirillKhitev/goph_keeper/internal/config"
 	"github.com/KirillKhitev/goph_keeper/internal/models"
 	"github.com/KirillKhitev/goph_keeper/internal/mycrypto"
 	"github.com/charmbracelet/bubbles/filepicker"
@@ -192,7 +193,8 @@ func (m *FileStageType) save() (tea.Model, tea.Cmd) {
 		"Authorization": m.token,
 	}
 
-	response := (*m.client).Update(ctx, headers, bytes)
+	url := fmt.Sprintf("http://%s/api/data/update", config.ConfigClient.AddrServer)
+	response := (*m.client).Update(ctx, url, headers, bytes)
 
 	if response.Code != 200 {
 		return m, func() tea.Msg {

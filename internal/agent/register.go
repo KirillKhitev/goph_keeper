@@ -7,6 +7,7 @@ import (
 	"github.com/KirillKhitev/goph_keeper/internal/api"
 	"github.com/KirillKhitev/goph_keeper/internal/auth"
 	"github.com/KirillKhitev/goph_keeper/internal/client"
+	"github.com/KirillKhitev/goph_keeper/internal/config"
 	"github.com/charmbracelet/bubbles/cursor"
 	"github.com/charmbracelet/bubbles/textinput"
 	tea "github.com/charmbracelet/bubbletea"
@@ -136,7 +137,8 @@ func (m *RegisterStageType) process() (tea.Model, tea.Cmd) {
 	bytes, _ := json.Marshal(data)
 
 	ctx := context.TODO()
-	response := (*m.client).Register(ctx, bytes)
+	url := fmt.Sprintf("http://%s/api/user/register", config.ConfigClient.AddrServer)
+	response := (*m.client).Register(ctx, url, bytes)
 
 	result := api.UserAuthBody{}
 

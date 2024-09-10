@@ -41,7 +41,7 @@ func (c *ClientForTests) SetUserID(userID string) {
 	c.userID = userID
 }
 
-func (c *ClientForTests) Get(ctx context.Context, headers map[string]string, data []byte) client.APIServiceResult {
+func (c *ClientForTests) Get(ctx context.Context, url string, headers map[string]string, data []byte) client.APIServiceResult {
 	var dataRequest models.Data
 
 	_ = json.Unmarshal(data, &dataRequest)
@@ -81,7 +81,7 @@ func (c *ClientForTests) Get(ctx context.Context, headers map[string]string, dat
 	}
 }
 
-func (c *ClientForTests) List(ctx context.Context, headers map[string]string) client.APIServiceResult {
+func (c *ClientForTests) List(ctx context.Context, url string, headers map[string]string) client.APIServiceResult {
 	result := []models.Data{
 		{
 			ID:          "111",
@@ -107,7 +107,7 @@ func (c *ClientForTests) List(ctx context.Context, headers map[string]string) cl
 	}
 }
 
-func (c *ClientForTests) Update(ctx context.Context, headers map[string]string, data []byte) client.APIServiceResult {
+func (c *ClientForTests) Update(ctx context.Context, url string, headers map[string]string, data []byte) client.APIServiceResult {
 	var d models.Data
 
 	_ = json.Unmarshal(data, &d)
@@ -123,7 +123,7 @@ func (c *ClientForTests) Update(ctx context.Context, headers map[string]string, 
 	}
 }
 
-func (c *ClientForTests) Login(ctx context.Context, data []byte) client.APIServiceResult {
+func (c *ClientForTests) Login(ctx context.Context, url string, data []byte) client.APIServiceResult {
 	var r auth.AuthorizingData
 
 	_ = json.Unmarshal(data, &r)
@@ -146,7 +146,7 @@ func (c *ClientForTests) Login(ctx context.Context, data []byte) client.APIServi
 	}
 }
 
-func (c *ClientForTests) Register(ctx context.Context, data []byte) client.APIServiceResult {
+func (c *ClientForTests) Register(ctx context.Context, url string, data []byte) client.APIServiceResult {
 	var r auth.AuthorizingData
 
 	_ = json.Unmarshal(data, &r)
