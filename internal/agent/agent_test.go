@@ -868,17 +868,51 @@ func TestFileStageType_save(t *testing.T) {
 
 	type fields struct {
 		LoginPasswordStageType LoginPasswordStageType
-		selectedFile           string
+	}
+
+	type args struct {
+		needCreateFile bool
+		selectedFile   string
+		data           []byte
 	}
 	tests := []struct {
 		name   string
 		fields fields
+		args   args
 		want   string
 	}{
 		{
 			name: "positive test #1",
 			fields: fields{
 				LoginPasswordStageType: LoginPasswordStageType{},
+			},
+			args: args{
+				needCreateFile: true,
+				selectedFile:   "files" + string(os.PathSeparator) + "test_file.txt",
+				data:           []byte("Hello"),
+			},
+			want: "agent.openList",
+		},
+		{
+			name: "negative test #2",
+			fields: fields{
+				LoginPasswordStageType: LoginPasswordStageType{},
+			},
+			args: args{
+				needCreateFile: false,
+				selectedFile:   "files" + string(os.PathSeparator) + "test_file.txt",
+				data:           []byte("Hello"),
+			},
+			want: "agent.infoMsg",
+		},
+		{
+			name: "negative test #3",
+			fields: fields{
+				LoginPasswordStageType: LoginPasswordStageType{},
+			},
+			args: args{
+				needCreateFile: false,
+				selectedFile:   "files" + string(os.PathSeparator) + "wrong.txt",
 			},
 			want: "agent.infoMsg",
 		},
@@ -887,16 +921,20 @@ func TestFileStageType_save(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			m := &FileStageType{
 				LoginPasswordStageType: tt.fields.LoginPasswordStageType,
-				selectedFile:           tt.fields.selectedFile,
+				selectedFile:           tt.args.selectedFile,
 			}
 
-			os.Mkdir("files", 777)
+			if tt.args.needCreateFile {
+				os.Mkdir("files", 777)
 
-			defer func() {
-				os.RemoveAll("files")
-			}()
+				f, _ := os.Create(tt.args.selectedFile)
 
-			m.selectedFile = "files\\test_file.txt"
+				defer func() {
+					f.Close()
+					os.RemoveAll("files")
+				}()
+			}
+
 			m.Prepare(app)
 			m.recordID = ""
 
