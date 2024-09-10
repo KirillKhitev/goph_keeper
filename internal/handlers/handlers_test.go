@@ -385,7 +385,7 @@ func Test_sendResponse(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			sendResponse(tt.args.res, tt.args.writer)
+			SendResponse(tt.args.res, tt.args.writer)
 
 			code := tt.args.writer.(*httptest.ResponseRecorder).Code
 			body := tt.args.writer.(*httptest.ResponseRecorder).Body.Bytes()

@@ -5,7 +5,6 @@ import (
 	"compress/gzip"
 	"context"
 	"fmt"
-	"github.com/KirillKhitev/goph_keeper/internal/config"
 	"github.com/go-resty/resty/v2"
 	"log"
 	"time"
@@ -46,12 +45,10 @@ func (c *RestyClient) SetUserID(userID string) {
 	c.userID = userID
 }
 
-func (c *RestyClient) Get(ctx context.Context, headers map[string]string, data []byte) APIServiceResult {
+func (c *RestyClient) Get(ctx context.Context, url string, headers map[string]string, data []byte) APIServiceResult {
 	result := APIServiceResult{}
 	log.Println("source data: ", string(data))
 	var err error
-
-	url := fmt.Sprintf("http://%s/api/data/get", config.ConfigClient.AddrServer)
 
 	dataForSend, err := c.prepareDataForSend(data)
 	if err != nil {
@@ -87,11 +84,9 @@ func (c *RestyClient) Get(ctx context.Context, headers map[string]string, data [
 	return result
 }
 
-func (c *RestyClient) Update(ctx context.Context, headers map[string]string, data []byte) APIServiceResult {
+func (c *RestyClient) Update(ctx context.Context, url string, headers map[string]string, data []byte) APIServiceResult {
 	result := APIServiceResult{}
 	log.Println("source data: ", string(data))
-
-	url := fmt.Sprintf("http://%s/api/data/update", config.ConfigClient.AddrServer)
 
 	var err error
 	dataForSend, err := c.prepareDataForSend(data)
@@ -128,10 +123,8 @@ func (c *RestyClient) Update(ctx context.Context, headers map[string]string, dat
 	return result
 }
 
-func (c *RestyClient) List(ctx context.Context, headers map[string]string) APIServiceResult {
+func (c *RestyClient) List(ctx context.Context, url string, headers map[string]string) APIServiceResult {
 	result := APIServiceResult{}
-
-	url := fmt.Sprintf("http://%s/api/data/list", config.ConfigClient.AddrServer)
 
 	dataForSend, err := c.prepareDataForSend([]byte{})
 
@@ -162,11 +155,9 @@ func (c *RestyClient) List(ctx context.Context, headers map[string]string) APISe
 	return result
 }
 
-func (c *RestyClient) Login(ctx context.Context, data []byte) APIServiceResult {
+func (c *RestyClient) Login(ctx context.Context, url string, data []byte) APIServiceResult {
 	result := APIServiceResult{}
 	log.Println("source data: ", string(data))
-
-	url := fmt.Sprintf("http://%s/api/user/login", config.ConfigClient.AddrServer)
 
 	var err error
 	dataForSend, err := c.prepareDataForSend(data)
@@ -198,11 +189,9 @@ func (c *RestyClient) Login(ctx context.Context, data []byte) APIServiceResult {
 	return result
 }
 
-func (c *RestyClient) Register(ctx context.Context, data []byte) APIServiceResult {
+func (c *RestyClient) Register(ctx context.Context, url string, data []byte) APIServiceResult {
 	result := APIServiceResult{}
 	log.Println("source data: ", string(data))
-
-	url := fmt.Sprintf("http://%s/api/user/register", config.ConfigClient.AddrServer)
 
 	var err error
 	dataForSend, err := c.prepareDataForSend(data)

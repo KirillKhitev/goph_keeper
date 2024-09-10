@@ -24,7 +24,7 @@ func (ch *Register) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	response := api.RegisterUser(w, r, ch.Store)
 
-	sendResponse(response, w)
+	SendResponse(response, w)
 }
 
 // Хендлер авторизации.
@@ -39,7 +39,7 @@ func (ch *Login) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	response := api.Login(w, r, ch.Store)
 
-	sendResponse(response, w)
+	SendResponse(response, w)
 }
 
 // Хендлер обновления данных в хранилище.
@@ -54,13 +54,13 @@ func (ch *Update) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	userID, response := api.GetUserFromAuthHeader(w, r, ch.Store)
 	if response.Code != 0 {
-		sendResponse(response, w)
+		SendResponse(response, w)
 		return
 	}
 
 	response = api.UpdateData(w, r, userID, ch.Store)
 
-	sendResponse(response, w)
+	SendResponse(response, w)
 }
 
 // Хендлер получения списка записей.
@@ -75,13 +75,13 @@ func (ch *List) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	userID, response := api.GetUserFromAuthHeader(w, r, ch.Store)
 	if response.Code != 0 {
-		sendResponse(response, w)
+		SendResponse(response, w)
 		return
 	}
 
 	response = api.ListData(w, r, userID, ch.Store)
 
-	sendResponse(response, w)
+	SendResponse(response, w)
 }
 
 // Хендлер получения информации записи.
@@ -96,17 +96,17 @@ func (ch *Get) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	userID, response := api.GetUserFromAuthHeader(w, r, ch.Store)
 	if response.Code != 0 {
-		sendResponse(response, w)
+		SendResponse(response, w)
 		return
 	}
 
 	response = api.GetData(w, r, userID, ch.Store)
 
-	sendResponse(response, w)
+	SendResponse(response, w)
 }
 
-// Отправка ответа сервера агенту.
-func sendResponse(res api.ResponseType, writer http.ResponseWriter) {
+// SendResponse Отправка ответа сервера агенту.
+func SendResponse(res api.ResponseType, writer http.ResponseWriter) {
 	if len(res.LogMsg) > 0 {
 		log.Println(res.LogMsg)
 	}

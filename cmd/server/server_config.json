@@ -1,5 +1,5 @@
 {
   "addr_run": "localhost:8080",
-  "database_dsn": "postgres://postgres:postgres@postgres:5432/gk?sslmode=disable",
+  "database_dsn": "host=localhost user=postgres password=pass dbname=gk sslmode=disable",
   "master_key": "sdfertebghfgh456hdbfgh"
 }
