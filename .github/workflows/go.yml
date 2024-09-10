@@ -54,3 +54,55 @@ jobs:
       uses: codecov/codecov-action@v4
       with:
         token: ${{ secrets.CODECOV_TOKEN }}
+
+
+  build-macos:
+    runs-on: macOS-latest
+
+    steps:
+      - name: Build client
+        run: |
+          cd cmd/client
+          go build -ldflags "-X main.buildVersion=$(date +'%Y%m%d') -X main.buildDate=$(date +'%Y-%m-%dT%H:%M:%S')" -buildvcs=false
+      - name: zip macos artifact
+        run: |
+          zip -r macos out
+      - name: upload macos artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: uploads
+          path: macos.zip
+
+  build-linux:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Build client
+        run: |
+          cd cmd/client
+          go build -ldflags "-X main.buildVersion=$(date +'%Y%m%d') -X main.buildDate=$(date +'%Y-%m-%dT%H:%M:%S')" -buildvcs=false
+      - name: zip linux artifact
+        run: |
+          zip -r linux out
+      - name: upload linux artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: uploads
+          path: linux.zip
+
+  build-windows:
+    runs-on: windows-latest
+
+    steps:
+      - name: Build client
+        run: |
+          cd cmd/client
+          go build -ldflags "-X main.buildVersion=$(date +'%Y%m%d') -X main.buildDate=$(date +'%Y-%m-%dT%H:%M:%S')" -buildvcs=false
+      - name: zip win artifact
+        run: |
+          powershell Compress-Archive out windows.zip
+      - name: upload windows artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: uploads
+          path: windows.zip
