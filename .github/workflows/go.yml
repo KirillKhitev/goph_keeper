@@ -46,22 +46,23 @@ jobs:
       run: |
           cd cmd/agent
           go build -ldflags "-X main.buildVersion=$VERSION -X main.buildDate=$NOW" -buildvcs=false -o linux_agent
+          ls -lh
     - name: upload linux artifact
       uses: actions/upload-artifact@v4
       with:
         name: uploads
-        path: linux_agent
+        path: cmd/agent/linux_agent
 
     - name: Build agent macos
       run: |
         cd cmd/agent
         env GOOS=darwin GOARCH=amd64 go build -ldflags "-X main.buildVersion=$VERSION -X main.buildDate=$NOW" -buildvcs=false -o macos_agent.sh
-
+        ls -lh
     - name: upload macos artifact
       uses: actions/upload-artifact@v4
       with:
         name: uploads
-        path: macos_agent.sh
+        path: cmd/agent/macos_agent.sh
 
     - name: Build agent windows
       run: |
@@ -71,7 +72,7 @@ jobs:
       uses: actions/upload-artifact@v4
       with:
         name: uploads
-        path: windows_agent.exe
+        path: cmd/agent/windows_agent.exe
     
     - name: Build server
       run: |
@@ -92,7 +93,7 @@ jobs:
       id: create_release
       uses: actions/create-release@master
       env:
-        GITHUB_TOKEN: ${{ secrets.TOKEN }}
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
         tag_name: ${{ github.ref }}
         release_name: Release ${{ github.ref }}
@@ -106,7 +107,7 @@ jobs:
       id: upload-macos
       uses: actions/upload-release-asset@v1.0.1
       env:
-        GITHUB_TOKEN: ${{ secrets.TOKEN }}
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
         upload_url: ${{ steps.create_release.outputs.upload_url }}
         asset_path: ./uploads/macos_agent.sh
@@ -116,7 +117,7 @@ jobs:
       id: upload-linux
       uses: actions/upload-release-asset@v1.0.1
       env:
-        GITHUB_TOKEN: ${{ secrets.TOKEN }}
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
         upload_url: ${{ steps.create_release.outputs.upload_url }}
         asset_path: ./uploads/linux_agent
@@ -126,7 +127,7 @@ jobs:
       id: upload-windows
       uses: actions/upload-release-asset@v1.0.1
       env:
-        GITHUB_TOKEN: ${{ secrets.TOKEN }}
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
         upload_url: ${{ steps.create_release.outputs.upload_url }}
         asset_path: ./uploads/windows_agent.exe
