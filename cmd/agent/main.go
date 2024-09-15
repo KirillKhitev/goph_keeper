@@ -14,7 +14,6 @@ import (
 var (
 	buildVersion string = "N/A" // Версия сборки
 	buildDate    string = "N/A" // Дата сборки
-	buildCommit  string = "N/A" // Комментарий сборки
 )
 
 func main() {
@@ -56,5 +55,4 @@ func run() error {
 func printBuildInfo() {
 	fmt.Printf("Build version: %s\n", buildVersion)
 	fmt.Printf("Build date: %s\n", buildDate)
-	fmt.Printf("Build commit: %s\n", buildCommit)
 }

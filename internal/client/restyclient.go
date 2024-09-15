@@ -86,7 +86,6 @@ func (c *RestyClient) Get(ctx context.Context, url string, headers map[string]st
 
 func (c *RestyClient) Update(ctx context.Context, url string, headers map[string]string, data []byte) APIServiceResult {
 	result := APIServiceResult{}
-	log.Println("source data: ", string(data))
 
 	var err error
 	dataForSend, err := c.prepareDataForSend(data)
@@ -94,7 +93,7 @@ func (c *RestyClient) Update(ctx context.Context, url string, headers map[string
 		return result
 	}
 
-	ctxt, cancel := context.WithTimeout(ctx, time.Second*5)
+	ctxt, cancel := context.WithTimeout(ctx, time.Second*60)
 	defer cancel()
 
 	request := c.client.R().

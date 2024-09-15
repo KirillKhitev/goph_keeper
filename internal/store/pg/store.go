@@ -31,50 +31,7 @@ func NewStore(ctx context.Context, conn *sql.DB) (*Store, error) {
 		conn: conn,
 	}
 
-	if err := store.Bootstrap(ctx); err != nil {
-		return store, err
-	}
-
 	return store, nil
-}
-
-// Bootstrap инициализирует хранилище, создает таблицы, если их нет.
-func (s *Store) Bootstrap(ctx context.Context) error {
-	tx, err := s.conn.BeginTx(ctx, nil)
-	if err != nil {
-		return err
-	}
-
-	defer tx.Rollback()
-
-	tx.ExecContext(
-		ctx,
-		`CREATE TABLE IF NOT EXISTS users (
-			id varchar(36) PRIMARY KEY,
-			user_name varchar(255),
-			hash_password varchar(255),
-    		deleted boolean DEFAULT FALSE,
-			registration_date timestamp
-		)`,
-	)
-	tx.ExecContext(ctx, `CREATE UNIQUE INDEX IF NOT EXISTS user_name_users_idx ON users (user_name)`)
-
-	tx.ExecContext(
-		ctx,
-		`CREATE TABLE IF NOT EXISTS datas (
-			id varchar(36) PRIMARY KEY,
-    		name bytea DEFAULT NULL,
-    		user_id varchar(36) NOT NULL,
-    		type varchar(100) NOT NULL,
-			date timestamp,
-			body bytea DEFAULT NULL,
-			deleted boolean DEFAULT FALSE,
-			description bytea DEFAULT NULL
-		)`,
-	)
-	tx.ExecContext(ctx, `CREATE INDEX IF NOT EXISTS del_user_type_idx ON datas (deleted, user_id, type)`)
-
-	return tx.Commit()
 }
 
 // CreateUser создает нового пользователя.
@@ -236,9 +193,13 @@ func (s *Store) Save(ctx context.Context, data models.Data) (models.Data, error)
 		data.Date = time.Now()
 	}
 
-	fmt.Println("Name", string(data.Name), data.Name)
+	data, err = s.createRecord(ctx, data)
 
-	_, err = s.conn.ExecContext(ctx, `
+	return data, nil
+}
+
+func (s *Store) createRecord(ctx context.Context, data models.Data) (models.Data, error) {
+	_, err := s.conn.ExecContext(ctx, `
 	INSERT INTO datas
 	    (id, name, user_id, type, date, body, deleted, description)
 	VALUES

@@ -86,6 +86,7 @@ func (f *ParamsClient) Parse() error {
 
 	if err != nil {
 		fmt.Println(err)
+		c.AddrServer = "localhost:8080"
 	} else {
 		err = json.Unmarshal(data, c)
 

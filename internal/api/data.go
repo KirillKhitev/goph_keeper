@@ -163,6 +163,14 @@ func saveDataFile(w http.ResponseWriter, r *http.Request, data models.Data, s st
 		}
 	}
 
+	err = os.MkdirAll(FilesDir, 777)
+	if err != nil {
+		return ResponseType{
+			Code:   http.StatusInternalServerError,
+			LogMsg: fmt.Sprintf("%s: unable save data - %v", UpdateDataErrPrefix, err),
+		}
+	}
+
 	f, err := os.Create(FilesDir + string(os.PathSeparator) + data.ID)
 	defer f.Close()
 

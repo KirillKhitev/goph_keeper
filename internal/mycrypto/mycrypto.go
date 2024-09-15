@@ -26,6 +26,10 @@ func Encrypt(src []byte, keyFile string) ([]byte, error) {
 	}
 
 	key, err := base64.StdEncoding.DecodeString(string(keyBase64))
+	if err != nil {
+		log.Printf("error decode base64: %v\n", err)
+		return result, fmt.Errorf("ошибка при ключа шифрования: %w", err)
+	}
 
 	aesblock, err := aes.NewCipher(key)
 	if err != nil {

@@ -35,11 +35,11 @@ func TestParamsClient_Parse(t *testing.T) {
 			createConfig: true,
 		},
 		{
-			name: "negative test #2",
+			name: "positive test #2",
 			fields: fields{
 				AddrServer: "127.0.0.1:8080",
 			},
-			wantErr:      true,
+			wantErr:      false,
 			createConfig: false,
 		},
 	}

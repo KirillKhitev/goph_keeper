@@ -65,7 +65,7 @@ func (m *FileStageType) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	}
 
 	if didSelect, path := m.filepicker.DidSelectDisabledFile(msg); didSelect {
-		m.err = errors.New(path + " не валидный.")
+		m.err = errors.New(path + " не валидный.\r\n")
 		m.selectedFile = ""
 		return m, tea.Batch(cmd, clearErrorAfter(2*time.Second))
 	}
@@ -175,11 +175,11 @@ func (m *FileStageType) save() (tea.Model, tea.Cmd) {
 
 	file, _ := f.Stat()
 
-	if file.Size() > 10737418240 {
+	if file.Size() > 100000000 {
 		return m, func() tea.Msg {
 			log.Println("save ", m.selectedFile, err)
 			return infoMsg{
-				message:    fmt.Sprintf("Файл не может быть больше 10Гб"),
+				message:    fmt.Sprintf("Файл не может быть больше 100Мб"),
 				back:       "file",
 				backButton: "Назад",
 			}
@@ -197,7 +197,15 @@ func (m *FileStageType) save() (tea.Model, tea.Cmd) {
 		Body:        body,
 	}
 
-	bytes, _ := json.Marshal(data)
+	bytes, err := json.Marshal(data)
+	if err != nil {
+		return m, func() tea.Msg {
+			return errMsg{
+				error: err,
+				back:  "file",
+			}
+		}
+	}
 
 	ctx := context.TODO()
 	headers := map[string]string{
