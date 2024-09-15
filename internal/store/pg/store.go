@@ -195,7 +195,7 @@ func (s *Store) Save(ctx context.Context, data models.Data) (models.Data, error)
 
 	data, err = s.createRecord(ctx, data)
 
-	return data, nil
+	return data, err
 }
 
 func (s *Store) createRecord(ctx context.Context, data models.Data) (models.Data, error) {

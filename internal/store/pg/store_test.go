@@ -512,3 +512,69 @@ func TestStore_createRecord(t *testing.T) {
 		})
 	}
 }
+
+func TestStore_Save(t *testing.T) {
+	db, mock, _ := sqlmock.New()
+	sqlxDB := sqlx.NewDb(db, "sqlmock")
+	defer db.Close()
+
+	type fields struct {
+		conn *sql.DB
+	}
+	type args struct {
+		ctx  context.Context
+		data models.Data
+	}
+	tests := []struct {
+		name    string
+		fields  fields
+		args    args
+		want    models.Data
+		wantErr bool
+	}{
+		{
+			name: "positive test #1",
+			fields: fields{
+				conn: sqlxDB.DB,
+			},
+			args: args{
+				ctx: context.Background(),
+				data: models.Data{
+					ID:   "111",
+					Name: []byte("name"),
+					Type: "text",
+				},
+			},
+			want: models.Data{
+				ID: "111",
+			},
+			wantErr: false,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			s := &Store{
+				conn: tt.fields.conn,
+			}
+
+			mock.ExpectQuery("^SELECT (.+)").
+				WithArgs(tt.args.data.ID).
+				WillReturnRows(
+					sqlmock.NewRows([]string{"id", "user_id", "name", "type", "date", "deleted", "body", "description"}).
+						AddRow("111", "user_id", []byte("name"), "text", time.Now(), false, []byte("body"), []byte("description")))
+
+			var lastInsertID, affected int64
+			result := sqlmock.NewResult(lastInsertID, affected)
+			mock.ExpectExec("^INSERT (.+)").WillReturnResult(result)
+
+			got, err := s.Save(tt.args.ctx, tt.args.data)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("Save() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if got.ID != tt.want.ID {
+				t.Errorf("Save() got = %s, want %s", got.ID, tt.want.ID)
+			}
+		})
+	}
+}
