@@ -13,6 +13,9 @@ type ParamsServer struct {
 	AddrRun            string `json:"addr_run"`
 	DBConnectionString string `json:"database_dsn"`
 	MasterKey          string `json:"master_key"`
+	MigrationDB        string `json:"migration_db"`
+	MigrationUser      string `json:"migration_user"`
+	MigrationPassword  string `json:"migration_password"`
 }
 
 // ConfigServer хранит параметры запуска сервера.
@@ -39,6 +42,9 @@ func (f *ParamsServer) Parse() error {
 	flag.StringVar(&f.AddrRun, "a", c.AddrRun, "address and port to run API")
 	flag.StringVar(&f.DBConnectionString, "d", c.DBConnectionString, "string for connection to DB, format 'host=%s port=%s user=%s password=%s dbname=%s sslmode=%s'")
 	flag.StringVar(&f.MasterKey, "mk", c.MasterKey, "master key server")
+	flag.StringVar(&f.MigrationDB, "mdb", c.MigrationDB, "db for migrations")
+	flag.StringVar(&f.MigrationUser, "mu", c.MigrationUser, "user for migrations")
+	flag.StringVar(&f.MigrationPassword, "mp", c.MigrationPassword, "password for migrations")
 	flag.Parse()
 
 	if envRunAddr := os.Getenv(`RUN_ADDRESS`); envRunAddr != `` {

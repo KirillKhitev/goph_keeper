@@ -4,14 +4,19 @@ package pg
 import (
 	"context"
 	"database/sql"
+	"embed"
 	"errors"
 	"fmt"
 	"github.com/KirillKhitev/goph_keeper/internal/auth"
+	"github.com/KirillKhitev/goph_keeper/internal/config"
 	"github.com/KirillKhitev/goph_keeper/internal/errs"
 	"github.com/KirillKhitev/goph_keeper/internal/models"
 	"github.com/beevik/guid"
+	"github.com/go-pg/migrations/v8"
+	"github.com/go-pg/pg/v10"
 	"github.com/jackc/pgerrcode"
 	"github.com/jackc/pgx/v5/pgconn"
+	"net/http"
 	"time"
 )
 
@@ -25,11 +30,29 @@ func (s *Store) Close() error {
 	return s.conn.Close()
 }
 
+//go:embed migrations/*.sql
+var migs embed.FS
+
+const directory_migrations = "migrations"
+
 // Конструктор хранилища.
 func NewStore(ctx context.Context, conn *sql.DB) (*Store, error) {
 	store := &Store{
 		conn: conn,
 	}
+
+	opt := &pg.Options{
+		User:     config.ConfigServer.MigrationUser,
+		Password: config.ConfigServer.MigrationPassword,
+		Database: config.ConfigServer.MigrationDB,
+	}
+
+	db := pg.Connect(opt)
+	collection := migrations.NewCollection()
+	collection.DiscoverSQLMigrationsFromFilesystem(http.FS(migs), "migrations")
+	collection.DisableSQLAutodiscover(true)
+	collection.Run(db, "init", "version")
+	collection.Run(db)
 
 	return store, nil
 }
