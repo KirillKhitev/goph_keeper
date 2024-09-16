@@ -872,6 +872,7 @@ func TestFileStageType_save(t *testing.T) {
 
 	type args struct {
 		needCreateFile bool
+		sizeFile       int
 		selectedFile   string
 		data           []byte
 	}
@@ -888,6 +889,7 @@ func TestFileStageType_save(t *testing.T) {
 			},
 			args: args{
 				needCreateFile: true,
+				sizeFile:       10,
 				selectedFile:   "files" + string(os.PathSeparator) + "test_file.txt",
 				data:           []byte("Hello"),
 			},
@@ -916,6 +918,18 @@ func TestFileStageType_save(t *testing.T) {
 			},
 			want: "agent.infoMsg",
 		},
+		{
+			name: "negative test #4",
+			fields: fields{
+				LoginPasswordStageType: LoginPasswordStageType{},
+			},
+			args: args{
+				needCreateFile: true,
+				sizeFile:       100000005,
+				selectedFile:   "files" + string(os.PathSeparator) + "test_file.txt",
+			},
+			want: "agent.infoMsg",
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -928,6 +942,7 @@ func TestFileStageType_save(t *testing.T) {
 				os.Mkdir("files", 777)
 
 				f, _ := os.Create(tt.args.selectedFile)
+				f.Write(make([]byte, tt.args.sizeFile))
 
 				defer func() {
 					f.Close()

@@ -159,17 +159,7 @@ func (m *FileStageType) save() (tea.Model, tea.Cmd) {
 
 	body, _ = mycrypto.Encrypt(body, m.userID)
 
-	f, err := os.Open(m.selectedFile)
-	if err != nil {
-		return m, func() tea.Msg {
-			log.Println("save ", m.selectedFile, err)
-			return infoMsg{
-				message:    fmt.Sprintf("Ошибка при получении статистики файла"),
-				back:       "file",
-				backButton: "Назад",
-			}
-		}
-	}
+	f, _ := os.Open(m.selectedFile)
 
 	defer f.Close()
 
@@ -197,15 +187,7 @@ func (m *FileStageType) save() (tea.Model, tea.Cmd) {
 		Body:        body,
 	}
 
-	bytes, err := json.Marshal(data)
-	if err != nil {
-		return m, func() tea.Msg {
-			return errMsg{
-				error: err,
-				back:  "file",
-			}
-		}
-	}
+	bytes, _ := json.Marshal(data)
 
 	ctx := context.TODO()
 	headers := map[string]string{
