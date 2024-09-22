@@ -145,6 +145,7 @@ func UpdateData(w http.ResponseWriter, r *http.Request, userID string, s store.S
 	return ResponseType{
 		LogMsg: fmt.Sprintf("data [%s] saved for user [%s]", data.ID, userID),
 		Code:   http.StatusOK,
+		Body:   []byte(data.ID),
 	}
 }
 
@@ -171,8 +172,13 @@ func saveDataFile(w http.ResponseWriter, r *http.Request, data models.Data, s st
 		}
 	}
 
-	f, err := os.Create(FilesDir + string(os.PathSeparator) + data.ID)
-	defer f.Close()
+	var f *os.File
+
+	if data.Part == 0 {
+		f, err = os.Create(FilesDir + string(os.PathSeparator) + data.ID)
+	} else {
+		f, err = os.OpenFile(FilesDir+string(os.PathSeparator)+data.ID, os.O_APPEND, 777)
+	}
 
 	if err != nil {
 		return ResponseType{
@@ -181,10 +187,13 @@ func saveDataFile(w http.ResponseWriter, r *http.Request, data models.Data, s st
 		}
 	}
 
+	defer f.Close()
+
 	f.Write(bodyData)
 
 	return ResponseType{
 		LogMsg: fmt.Sprintf("file saved for user [%s]", data.UserID),
 		Code:   http.StatusOK,
+		Body:   []byte(data.ID),
 	}
 }

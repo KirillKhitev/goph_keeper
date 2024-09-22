@@ -50,11 +50,6 @@ func (m *LoginPasswordStageType) getRecordID() string {
 	return m.recordID
 }
 
-// Init - заглушка для интерфейса.
-func (m *LoginPasswordStageType) Init() tea.Cmd {
-	return nil
-}
-
 // Prepare подготавливает модель данными.
 func (m *LoginPasswordStageType) Prepare(a *agent) {
 	m.inputs = make([]textinput.Model, 4)
@@ -146,22 +141,26 @@ func getRecordDataFromServer[T any](m FormStageType, data models.Data, body T) (
 }
 
 // Update обработка событий пользователя.
-func (m *LoginPasswordStageType) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+func (m *LoginPasswordStageType) Update(a *agent, msg tea.Msg) tea.Cmd {
+	cmds := make([]tea.Cmd, len(m.inputs))
+
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
 		switch msg.String() {
 		case "ctrl+c", "esc":
-			return m, tea.Quit
+			return tea.Quit
 
 		//Назад
 		case "ctrl+b":
-			return m, func() tea.Msg {
-				return openList{}
-			}
+			a.currenStage = "list"
+			a.recordID = ""
+			a.Stages[a.currenStage].Prepare(a)
+			return nil
 
 		//Сохранить
 		case "ctrl+s":
-			return m.save()
+			m.save(a)
+			return nil
 
 		case "tab", "shift+tab", "enter", "up", "down":
 			s := msg.String()
@@ -178,7 +177,6 @@ func (m *LoginPasswordStageType) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				m.focusIndex = len(m.inputs) - 1
 			}
 
-			cmds := make([]tea.Cmd, len(m.inputs))
 			for i := 0; i <= len(m.inputs)-1; i++ {
 				if i == m.focusIndex {
 					cmds[i] = m.inputs[i].Focus()
@@ -192,17 +190,17 @@ func (m *LoginPasswordStageType) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				m.inputs[i].TextStyle = noStyle
 			}
 
-			return m, tea.Batch(cmds...)
 		}
 	}
 
 	cmd := m.updateInputs(msg)
+	cmds = append(cmds, cmd)
 
-	return m, cmd
+	return tea.Batch(cmds...)
 }
 
 // save сохранение формы на сервере.
-func (m *LoginPasswordStageType) save() (tea.Model, tea.Cmd) {
+func (m *LoginPasswordStageType) save(a *agent) {
 	dataBody := models.LoginBody{
 		Login:    m.inputs[1].Value(),
 		Password: m.inputs[2].Value(),
@@ -233,18 +231,14 @@ func (m *LoginPasswordStageType) save() (tea.Model, tea.Cmd) {
 	response := (*m.client).Update(ctx, url, headers, bytes)
 
 	if response.Code != 200 {
-		return m, func() tea.Msg {
-			return infoMsg{
-				message:    string(response.Response),
-				back:       "login_password",
-				backButton: "Назад",
-			}
-		}
+		a.currenStage = "info"
+		a.Stages[a.currenStage] = InitInfoModel(string(response.Response), "login_password", "Назад")
+		return
 	}
 
-	return m, func() tea.Msg {
-		return openList{}
-	}
+	a.currenStage = "list"
+	a.recordID = ""
+	a.Stages[a.currenStage].Prepare(a)
 }
 
 // updateInputs обработка изменений полей формы.

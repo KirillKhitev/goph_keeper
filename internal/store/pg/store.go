@@ -2,6 +2,7 @@
 package pg
 
 import (
+	"bytes"
 	"context"
 	"database/sql"
 	"embed"
@@ -206,7 +207,7 @@ func (s *Store) Get(ctx context.Context, data models.Data) (models.Data, bool, e
 
 // Save сохраняет запись в БД.
 func (s *Store) Save(ctx context.Context, data models.Data) (models.Data, error) {
-	_, ok, err := s.Get(ctx, data)
+	existData, ok, err := s.Get(ctx, data)
 	if err != nil {
 		return data, fmt.Errorf("ошибка при поиске существующей записи - %w", err)
 	}
@@ -216,7 +217,16 @@ func (s *Store) Save(ctx context.Context, data models.Data) (models.Data, error)
 		data.Date = time.Now()
 	}
 
-	data, err = s.createRecord(ctx, data)
+	if data.Part == 0 {
+		data, err = s.createRecord(ctx, data)
+	} else {
+		newBody := make([][]byte, 2)
+		newBody = append(newBody, existData.Body, data.Body)
+
+		data.Body = bytes.Join(newBody, []byte{})
+
+		data, err = s.updateRecord(ctx, data)
+	}
 
 	return data, err
 }
@@ -245,6 +255,37 @@ func (s *Store) createRecord(ctx context.Context, data models.Data) (models.Data
 		data.Body,
 		data.Deleted,
 		data.Description,
+	)
+
+	if err != nil {
+		return data, fmt.Errorf("unable to save row: %w", err)
+	}
+
+	return data, nil
+}
+
+func (s *Store) updateRecord(ctx context.Context, data models.Data) (models.Data, error) {
+	_, err := s.conn.ExecContext(ctx, `
+	UPDATE datas
+	SET
+	    name = $1,
+	    user_id = $2,
+	    type = $3,
+	    date = $4,
+	    body = $5,
+	    deleted = $6,
+	    description = $7
+	WHERE
+	    id = $8
+	`,
+		data.Name,
+		data.UserID,
+		data.Type,
+		data.Date,
+		data.Body,
+		data.Deleted,
+		data.Description,
+		data.ID,
 	)
 
 	if err != nil {

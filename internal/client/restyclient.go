@@ -6,7 +6,6 @@ import (
 	"context"
 	"fmt"
 	"github.com/go-resty/resty/v2"
-	"log"
 	"time"
 )
 
@@ -47,7 +46,7 @@ func (c *RestyClient) SetUserID(userID string) {
 
 func (c *RestyClient) Get(ctx context.Context, url string, headers map[string]string, data []byte) APIServiceResult {
 	result := APIServiceResult{}
-	log.Println("source data: ", string(data))
+
 	var err error
 
 	dataForSend, err := c.prepareDataForSend(data)
@@ -156,7 +155,6 @@ func (c *RestyClient) List(ctx context.Context, url string, headers map[string]s
 
 func (c *RestyClient) Login(ctx context.Context, url string, data []byte) APIServiceResult {
 	result := APIServiceResult{}
-	log.Println("source data: ", string(data))
 
 	var err error
 	dataForSend, err := c.prepareDataForSend(data)
@@ -190,7 +188,6 @@ func (c *RestyClient) Login(ctx context.Context, url string, data []byte) APISer
 
 func (c *RestyClient) Register(ctx context.Context, url string, data []byte) APIServiceResult {
 	result := APIServiceResult{}
-	log.Println("source data: ", string(data))
 
 	var err error
 	dataForSend, err := c.prepareDataForSend(data)

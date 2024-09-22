@@ -5,6 +5,7 @@ import (
 	"github.com/KirillKhitev/goph_keeper/internal/client"
 	"github.com/charmbracelet/bubbles/filepicker"
 	"github.com/charmbracelet/bubbles/list"
+	"github.com/charmbracelet/bubbles/textinput"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 	"log"
@@ -15,8 +16,7 @@ import (
 
 // Базовый интерфейс модели экрана агента.
 type stage interface {
-	Init() tea.Cmd
-	Update(msg tea.Msg) (tea.Model, tea.Cmd)
+	Update(a *agent, msg tea.Msg) tea.Cmd
 	View() string
 	Prepare(a *agent)
 }
@@ -60,22 +60,15 @@ type errMsg struct {
 	back string
 }
 
-// Команда вывода списка записей пользователя, с запросом обновления с сервера.
-type openList struct{}
-
 // Вывод ошибки в текстовом виде.
 func (e errMsg) Error() string { return e.error.Error() }
 
 // Init инициализирует модель агента.
 func (a agent) Init() tea.Cmd {
-	cmds := make([]tea.Cmd, 2)
-	cmds = append(cmds, a.fp.Init(), a.Stages[a.currenStage].Init())
+	cmds := make([]tea.Cmd, 0)
+	cmds = append(cmds, textinput.Blink, a.fp.Init())
 
 	return tea.Batch(cmds...)
-}
-
-var OpenListMsg = func() tea.Msg {
-	return openList{}
 }
 
 // Prepare подготавливает модель.
@@ -84,7 +77,6 @@ func (a agent) Prepare(agent *agent) {
 }
 
 // Update отвечает за выполение команд на дейстсвия пользователя.
-// Обрабатывает стартовые события и осуществляет роутинг между моделями агента.
 func (a agent) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.WindowSizeMsg:
@@ -101,37 +93,7 @@ func (a agent) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		cmds = append(cmds, cmdFile)
 	}
 
-	_, cmd := a.Stages[a.currenStage].Update(msg)
-
-	if cmd != nil {
-		switch command := cmd().(type) {
-		case openStage:
-			a.currenStage = string(command)
-		case errMsg:
-			a.currenStage = "error"
-			a.Stages[a.currenStage] = InitErrorModel(command.error, command.back)
-		case infoMsg:
-			a.currenStage = "info"
-			a.Stages[a.currenStage] = InitInfoModel(command.message, command.back, command.backButton)
-		case openList:
-			a.currenStage = "list"
-			a.recordID = ""
-			a.Stages[a.currenStage].Prepare(&a)
-		case authSuccessMsg:
-			a.currenStage = "list"
-			a.userID = command.userID
-			a.token = command.token
-
-			(*a.client).SetUserID(command.userID)
-
-			a.Stages[a.currenStage].Prepare(&a)
-		case openForm:
-			a.currenStage = command.type_record
-			a.recordID = command.id
-			a.Stages[a.currenStage].Prepare(&a)
-		}
-	}
-
+	cmd := a.Stages[a.currenStage].Update(&a, msg)
 	cmds = append(cmds, cmd)
 
 	return a, tea.Batch(cmds...)
@@ -165,8 +127,8 @@ func NewAgent() (*agent, error) {
 
 	stages := map[string]stage{}
 	stages["start"] = &StartStageType{}
-	stages["registration"] = &RegisterStageType{}
 	stages["login"] = &LoginStageType{}
+	stages["registration"] = &RegisterStageType{}
 	stages["error"] = &ErrorStageType{}
 	stages["info"] = &InfoStageType{}
 	stages["list"] = &ListStageType{}

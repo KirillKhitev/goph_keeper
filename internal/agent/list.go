@@ -16,12 +16,6 @@ import (
 // Стиль документа.
 var docStyle = lipgloss.NewStyle().Padding(2, 2)
 
-// openForm команда для открытия формы пользовательской записи.
-type openForm struct {
-	id          string
-	type_record string
-}
-
 // listItem элемент списка записей.
 type listItem struct {
 	id, title, desc, type_record string
@@ -41,11 +35,6 @@ type ListStageType struct {
 	userID string
 	List   list.Model
 	client *client.Client
-}
-
-// Init - заглушка для интерфейса.
-func (m *ListStageType) Init() tea.Cmd {
-	return nil
 }
 
 // Prepare подготавливает список записей пользователя.
@@ -84,26 +73,23 @@ func (m *ListStageType) Prepare(a *agent) {
 }
 
 // Update обрабатывает события пользователя.
-func (m *ListStageType) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+func (m *ListStageType) Update(a *agent, msg tea.Msg) tea.Cmd {
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
 		switch msg.String() {
 		case "ctrl+c", "esc":
-			return m, tea.Quit
+			return tea.Quit
 
 		case "enter":
 			selectedItem := m.List.SelectedItem().(listItem)
-			return m, func() tea.Msg {
-				return openForm{
-					id:          selectedItem.id,
-					type_record: selectedItem.type_record,
-				}
-			}
+			a.currenStage = selectedItem.type_record
+			a.recordID = selectedItem.id
+			a.Stages[a.currenStage].Prepare(a)
+			return nil
 
 		case "ctrl+n":
-			return m, func() tea.Msg {
-				return openStage("operation_list")
-			}
+			a.currenStage = "operation_list"
+			return nil
 		}
 
 	case tea.WindowSizeMsg:
@@ -114,7 +100,7 @@ func (m *ListStageType) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	var cmd tea.Cmd
 	m.List, cmd = m.List.Update(msg)
 
-	return m, cmd
+	return cmd
 }
 
 // View отображает элементы списка записей пользователя.

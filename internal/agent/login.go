@@ -22,11 +22,6 @@ type LoginStageType struct {
 	client *client.Client
 }
 
-// Init - заглушка для интерфейса.
-func (s *LoginStageType) Init() tea.Cmd {
-	return nil
-}
-
 // Prepare подготавливает модель.
 func (s *LoginStageType) Prepare(a *agent) {
 	s.inputs = make([]textinput.Model, 2)
@@ -57,26 +52,28 @@ func (s *LoginStageType) Prepare(a *agent) {
 }
 
 // Update обработка событий пользователя.
-func (m *LoginStageType) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+func (m *LoginStageType) Update(a *agent, msg tea.Msg) tea.Cmd {
+	cmds := make([]tea.Cmd, len(m.inputs))
+
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
 		switch msg.String() {
 		case "ctrl+c", "esc":
-			return m, tea.Quit
+			return tea.Quit
 
 		case "tab", "shift+tab", "enter", "up", "down":
 			s := msg.String()
 
 			// Назад
 			if s == "enter" && m.focusIndex == len(m.inputs)+1 {
-				return m, func() tea.Msg {
-					return openStage("start")
-				}
+				a.currenStage = "start"
+				return nil
 			}
 
 			//Авторизоваться
 			if s == "enter" && m.focusIndex == len(m.inputs) {
-				return m.process()
+				m.process(a)
+				return nil
 			}
 
 			if s == "up" || s == "shift+tab" {
@@ -91,7 +88,6 @@ func (m *LoginStageType) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				m.focusIndex = len(m.inputs) + 1
 			}
 
-			cmds := make([]tea.Cmd, len(m.inputs))
 			for i := 0; i <= len(m.inputs)-1; i++ {
 				if i == m.focusIndex {
 					cmds[i] = m.inputs[i].Focus()
@@ -104,18 +100,17 @@ func (m *LoginStageType) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				m.inputs[i].PromptStyle = noStyle
 				m.inputs[i].TextStyle = noStyle
 			}
-
-			return m, tea.Batch(cmds...)
 		}
 	}
 
 	cmd := m.updateInputs(msg)
+	cmds = append(cmds, cmd)
 
-	return m, cmd
+	return tea.Batch(cmds...)
 }
 
 // process отправляет данные формы авторизации на сервер.
-func (m *LoginStageType) process() (tea.Model, tea.Cmd) {
+func (m *LoginStageType) process(a *agent) {
 	data := auth.AuthorizingData{
 		UserName: m.inputs[0].Value(),
 		Password: m.inputs[1].Value(),
@@ -130,31 +125,24 @@ func (m *LoginStageType) process() (tea.Model, tea.Cmd) {
 
 	if err := json.Unmarshal(response.Response, &result); err != nil {
 		log.Println("Error unmarshalling response: ", err)
-		return m, func() tea.Msg {
-			return infoMsg{
-				message:    "Не смогли распарсить ответ",
-				back:       "login",
-				backButton: "Назад",
-			}
-		}
+		a.currenStage = "info"
+		a.Stages[a.currenStage] = InitInfoModel("Не смогли распарсить ответ", "login", "Назад")
+		return
 	}
 
 	if response.Code != 200 {
-		return m, func() tea.Msg {
-			return infoMsg{
-				message:    result.Msg,
-				back:       "login",
-				backButton: "Назад",
-			}
-		}
+		a.currenStage = "info"
+		a.Stages[a.currenStage] = InitInfoModel(result.Msg, "login", "Назад")
+		return
 	}
 
-	return m, func() tea.Msg {
-		return authSuccessMsg{
-			userID: result.ID,
-			token:  response.Token,
-		}
-	}
+	a.currenStage = "list"
+	a.userID = result.ID
+	a.token = response.Token
+
+	(*a.client).SetUserID(result.ID)
+
+	a.Stages[a.currenStage].Prepare(a)
 }
 
 // updateInputs обработка ввода в поля формы.

@@ -83,21 +83,27 @@ func (m *CreditCardStageType) Prepare(a *agent) {
 }
 
 // Update обрабатывает события пользователя.
-func (m *CreditCardStageType) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+func (m *CreditCardStageType) Update(a *agent, msg tea.Msg) tea.Cmd {
+	cmds := make([]tea.Cmd, len(m.inputs))
+
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
 		switch msg.String() {
 		case "ctrl+c", "esc":
-			return m, tea.Quit
+			return tea.Quit
 
 		//Назад
 		case "ctrl+b":
-			return m, OpenListMsg
+			a.currenStage = "list"
+			a.recordID = ""
+			a.Stages[a.currenStage].Prepare(a)
+			return nil
 
 		//Сохранить
 		case "ctrl+s":
 			log.Println("Нажали Сохранить")
-			return m.save()
+			m.save(a)
+			return nil
 
 		case "tab", "shift+tab", "enter", "up", "down":
 			s := msg.String()
@@ -114,7 +120,6 @@ func (m *CreditCardStageType) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				m.focusIndex = len(m.inputs) - 1
 			}
 
-			cmds := make([]tea.Cmd, len(m.inputs))
 			for i := 0; i <= len(m.inputs)-1; i++ {
 				if i == m.focusIndex {
 					cmds[i] = m.inputs[i].Focus()
@@ -128,17 +133,17 @@ func (m *CreditCardStageType) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				m.inputs[i].TextStyle = noStyle
 			}
 
-			return m, tea.Batch(cmds...)
 		}
 	}
 
 	cmd := m.updateInputs(msg)
+	cmds = append(cmds, cmd)
 
-	return m, cmd
+	return tea.Batch(cmds...)
 }
 
 // save отправляет данные формы на сервер.
-func (m *CreditCardStageType) save() (tea.Model, tea.Cmd) {
+func (m *CreditCardStageType) save(a *agent) {
 	dataBody := models.CreditCardBody{
 		Ccn: m.inputs[ccn].Value(),
 		Exp: m.inputs[exp].Value(),
@@ -170,16 +175,14 @@ func (m *CreditCardStageType) save() (tea.Model, tea.Cmd) {
 	response := (*m.client).Update(ctx, url, headers, bytes)
 
 	if response.Code != 200 {
-		return m, func() tea.Msg {
-			return infoMsg{
-				message:    string(response.Response),
-				back:       "credit_card",
-				backButton: "Назад",
-			}
-		}
+		a.currenStage = "info"
+		a.Stages[a.currenStage] = InitInfoModel(string(response.Response), "credit_card", "Назад")
+		return
 	}
 
-	return m, OpenListMsg
+	a.currenStage = "list"
+	a.recordID = ""
+	a.Stages[a.currenStage].Prepare(a)
 }
 
 // ccnValidator валидирует номер карты.

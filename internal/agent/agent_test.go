@@ -278,6 +278,7 @@ func TestCreditCardStageType_Update(t *testing.T) {
 	clientTests := NewClient()
 	app, err := NewAgent()
 	app.client = &clientTests
+	app.currenStage = "credit_card"
 
 	if err != nil {
 		t.Fatal(err)
@@ -294,7 +295,7 @@ func TestCreditCardStageType_Update(t *testing.T) {
 		name   string
 		fields fields
 		args   args
-		want   tea.Cmd
+		want   string
 	}{
 		{
 			name: "positive test #1",
@@ -307,7 +308,7 @@ func TestCreditCardStageType_Update(t *testing.T) {
 					tea.KeyMsg{Type: tea.KeyEsc},
 				},
 			},
-			want: tea.Quit,
+			want: "credit_card",
 		},
 		{
 			name: "positive test #2",
@@ -323,7 +324,7 @@ func TestCreditCardStageType_Update(t *testing.T) {
 					tea.KeyMsg{Type: tea.KeyDown},
 				},
 			},
-			want: nil,
+			want: "credit_card",
 		},
 		{
 			name: "positive test #3",
@@ -335,7 +336,7 @@ func TestCreditCardStageType_Update(t *testing.T) {
 					tea.KeyMsg{Type: tea.KeyCtrlB},
 				},
 			},
-			want: OpenListMsg,
+			want: "list",
 		},
 	}
 	for _, tt := range tests {
@@ -349,10 +350,10 @@ func TestCreditCardStageType_Update(t *testing.T) {
 			}
 
 			for _, msg := range tt.args.msgs {
-				_, got := m.Update(msg.(tea.KeyMsg))
+				_ = m.Update(app, msg.(tea.KeyMsg))
 
-				if fmt.Sprintf("%v", got) != fmt.Sprintf("%v", tt.want) {
-					t.Errorf("Update(%s) got = %v, want %v", msg, got, tt.want)
+				if app.currenStage != tt.want {
+					t.Errorf("Update(%s) currenStage = %s, want %s", msg, app.currenStage, tt.want)
 				}
 			}
 		})
@@ -362,7 +363,7 @@ func TestCreditCardStageType_Update(t *testing.T) {
 		name   string
 		fields fields
 		args   args
-		want   tea.Cmd
+		want   string
 	}{
 		{
 			name: "positive test #4",
@@ -374,7 +375,7 @@ func TestCreditCardStageType_Update(t *testing.T) {
 					tea.KeyMsg{Type: tea.KeyCtrlS},
 				},
 			},
-			want: OpenListMsg,
+			want: "list",
 		},
 	}
 
@@ -416,7 +417,7 @@ func TestCreditCardStageType_Update(t *testing.T) {
 			}
 
 			for _, msg := range tt.args.msgs {
-				m.Update(msg.(tea.KeyMsg))
+				m.Update(app, msg.(tea.KeyMsg))
 			}
 		})
 	}
@@ -456,7 +457,7 @@ func TestCreditCardStageType_save(t *testing.T) {
 			args: args{
 				recordID: "success",
 			},
-			want: "agent.openList",
+			want: "list",
 		},
 		{
 			name: "negative test #2",
@@ -466,7 +467,7 @@ func TestCreditCardStageType_save(t *testing.T) {
 			args: args{
 				recordID: "error",
 			},
-			want: "agent.infoMsg",
+			want: "info",
 		},
 	}
 	for _, tt := range tests {
@@ -478,44 +479,9 @@ func TestCreditCardStageType_save(t *testing.T) {
 			m.Prepare(app)
 			m.recordID = tt.args.recordID
 
-			_, got := m.save()
-			if fmt.Sprintf("%T", got()) != fmt.Sprintf("%s", tt.want) {
-				t.Errorf("save() got = %T, want %s", got(), tt.want)
-			}
-		})
-	}
-}
-
-func TestErrorStageType_Init(t *testing.T) {
-	type fields struct {
-		focusIndex int
-		back       string
-		error      error
-	}
-	tests := []struct {
-		name   string
-		fields fields
-		want   tea.Cmd
-	}{
-		{
-			name: "posititve test #1",
-			fields: fields{
-				focusIndex: 0,
-				back:       "Назад",
-				error:      nil,
-			},
-			want: nil,
-		},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			s := &ErrorStageType{
-				focusIndex: tt.fields.focusIndex,
-				back:       tt.fields.back,
-				error:      tt.fields.error,
-			}
-			if got := s.Init(); !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("Init() = %v, want %v", got, tt.want)
+			m.save(app)
+			if app.currenStage != tt.want {
+				t.Errorf("save() got = %T, want %s", app.currenStage, tt.want)
 			}
 		})
 	}
@@ -554,7 +520,7 @@ func TestErrorStageType_Update(t *testing.T) {
 		name   string
 		fields fields
 		args   args
-		want   string
+		want   tea.Cmd
 	}{
 		{
 			name: "positive test #1",
@@ -564,7 +530,7 @@ func TestErrorStageType_Update(t *testing.T) {
 					tea.KeyMsg{Type: tea.KeyEsc},
 				},
 			},
-			want: "tea.QuitMsg",
+			want: tea.Quit,
 		},
 		{
 			name: "positive test #2",
@@ -573,7 +539,7 @@ func TestErrorStageType_Update(t *testing.T) {
 					tea.KeyMsg{Type: tea.KeyEnter},
 				},
 			},
-			want: "agent.openStage",
+			want: nil,
 		},
 	}
 	for _, tt := range tests {
@@ -581,10 +547,11 @@ func TestErrorStageType_Update(t *testing.T) {
 			m := &ErrorStageType{}
 
 			for _, msg := range tt.args.msgs {
-				_, got := m.Update(msg.(tea.KeyMsg))
+				app, _ := NewAgent()
+				got := m.Update(app, msg.(tea.KeyMsg))
 
-				if fmt.Sprintf("%T", got()) != fmt.Sprintf("%s", tt.want) {
-					t.Errorf("Update(%s) got = %T, want %s", msg, got(), tt.want)
+				if fmt.Sprintf("%T", got) != fmt.Sprintf("%T", tt.want) {
+					t.Errorf("Update(%s) got = %T, want %T", msg, got, tt.want)
 				}
 			}
 		})
@@ -620,35 +587,6 @@ func TestErrorStageType_View(t *testing.T) {
 			}
 			if got := m.View(); got != tt.want {
 				t.Errorf("View() = %v, want %v", got, tt.want)
-			}
-		})
-	}
-}
-
-func TestFileStageType_Init(t *testing.T) {
-	type fields struct {
-		LoginPasswordStageType LoginPasswordStageType
-	}
-	tests := []struct {
-		name   string
-		fields fields
-		want   tea.Cmd
-	}{
-		{
-			name: "positive test #1",
-			fields: fields{
-				LoginPasswordStageType: LoginPasswordStageType{},
-			},
-			want: nil,
-		},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			m := &FileStageType{
-				LoginPasswordStageType: tt.fields.LoginPasswordStageType,
-			}
-			if got := m.Init(); !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("Init() = %v, want %v", got, tt.want)
 			}
 		})
 	}
@@ -717,7 +655,7 @@ func TestFileStageType_Update(t *testing.T) {
 					tea.KeyMsg{Type: tea.KeyCtrlC},
 				},
 			},
-			want: "agent.infoMsg",
+			want: "info",
 		},
 	}
 	for _, tt := range tests {
@@ -737,10 +675,10 @@ func TestFileStageType_Update(t *testing.T) {
 			m.Prepare(app)
 
 			for _, msg := range tt.args.msgs {
-				_, got := m.Update(msg.(tea.KeyMsg))
+				m.Update(app, msg.(tea.KeyMsg))
 
-				if fmt.Sprintf("%T", got()) != fmt.Sprintf("%s", tt.want) {
-					t.Errorf("Update(%s) got = %T, want %s", msg, got(), tt.want)
+				if app.currenStage != tt.want {
+					t.Errorf("Update(%s) currenStage = %T, want %s", msg, app.currenStage, tt.want)
 				}
 			}
 		})
@@ -750,7 +688,7 @@ func TestFileStageType_Update(t *testing.T) {
 		name   string
 		fields fields
 		args   args
-		want   string
+		want   tea.Cmd
 	}{
 		{
 			name: "posisitive test #2",
@@ -764,7 +702,7 @@ func TestFileStageType_Update(t *testing.T) {
 					tea.KeyMsg{Type: tea.KeyEsc},
 				},
 			},
-			want: "tea.QuitMsg",
+			want: tea.Quit,
 		},
 		{
 			name: "posisitive test #3",
@@ -777,7 +715,7 @@ func TestFileStageType_Update(t *testing.T) {
 					tea.KeyMsg{Type: tea.KeyEnter},
 				},
 			},
-			want: "agent.openList",
+			want: nil,
 		},
 	}
 	for _, tt := range tests2 {
@@ -799,10 +737,10 @@ func TestFileStageType_Update(t *testing.T) {
 			m.selectedFile = "files" + string(os.PathSeparator) + "test_file.txt"
 
 			for _, msg := range tt.args.msgs {
-				_, got := m.Update(msg.(tea.KeyMsg))
+				got := m.Update(app, msg.(tea.KeyMsg))
 
-				if fmt.Sprintf("%T", got()) != fmt.Sprintf("%s", tt.want) {
-					t.Errorf("Update(%s) got = %T, want %s", msg, got(), tt.want)
+				if fmt.Sprintf("%T", got) != fmt.Sprintf("%T", tt.want) {
+					t.Errorf("Update(%s) got = %T, want %T", msg, got, tt.want)
 				}
 			}
 		})
@@ -893,7 +831,7 @@ func TestFileStageType_save(t *testing.T) {
 				selectedFile:   "files" + string(os.PathSeparator) + "test_file.txt",
 				data:           []byte("Hello"),
 			},
-			want: "agent.openList",
+			want: "list",
 		},
 		{
 			name: "negative test #2",
@@ -905,7 +843,7 @@ func TestFileStageType_save(t *testing.T) {
 				selectedFile:   "files" + string(os.PathSeparator) + "test_file.txt",
 				data:           []byte("Hello"),
 			},
-			want: "agent.infoMsg",
+			want: "info",
 		},
 		{
 			name: "negative test #3",
@@ -916,19 +854,7 @@ func TestFileStageType_save(t *testing.T) {
 				needCreateFile: false,
 				selectedFile:   "files" + string(os.PathSeparator) + "wrong.txt",
 			},
-			want: "agent.infoMsg",
-		},
-		{
-			name: "negative test #4",
-			fields: fields{
-				LoginPasswordStageType: LoginPasswordStageType{},
-			},
-			args: args{
-				needCreateFile: true,
-				sizeFile:       100000005,
-				selectedFile:   "files" + string(os.PathSeparator) + "test_file.txt",
-			},
-			want: "agent.infoMsg",
+			want: "info",
 		},
 	}
 	for _, tt := range tests {
@@ -953,29 +879,9 @@ func TestFileStageType_save(t *testing.T) {
 			m.Prepare(app)
 			m.recordID = ""
 
-			_, got := m.save()
-			if fmt.Sprintf("%T", got()) != fmt.Sprintf("%s", tt.want) {
-				t.Errorf("save() got = %T, want %s", got(), tt.want)
-			}
-		})
-	}
-}
-
-func TestInfoStageType_Init(t *testing.T) {
-	tests := []struct {
-		name string
-		want tea.Cmd
-	}{
-		{
-			name: "positive test #1",
-			want: nil,
-		},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			s := &InfoStageType{}
-			if got := s.Init(); !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("Init() = %v, want %v", got, tt.want)
+			m.save(app)
+			if app.currenStage != tt.want {
+				t.Errorf("save() got = %T, want %s", app.currenStage, tt.want)
 			}
 		})
 	}
@@ -1016,7 +922,7 @@ func TestInfoStageType_Update(t *testing.T) {
 		name   string
 		fields fields
 		args   args
-		want   string
+		want   tea.Cmd
 	}{
 		{
 			name: "positive test #1",
@@ -1026,7 +932,7 @@ func TestInfoStageType_Update(t *testing.T) {
 					tea.KeyMsg{Type: tea.KeyEsc},
 				},
 			},
-			want: "tea.QuitMsg",
+			want: tea.Quit,
 		},
 		{
 			name: "positive test #2",
@@ -1035,18 +941,19 @@ func TestInfoStageType_Update(t *testing.T) {
 					tea.KeyMsg{Type: tea.KeyEnter},
 				},
 			},
-			want: "agent.openStage",
+			want: nil,
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			m := &InfoStageType{}
+			app, _ := NewAgent()
 
 			for _, msg := range tt.args.msgs {
-				_, got := m.Update(msg.(tea.KeyMsg))
+				got := m.Update(app, msg.(tea.KeyMsg))
 
-				if fmt.Sprintf("%T", got()) != tt.want {
-					t.Errorf("Update(%s) got = %T, want %s", msg, got(), tt.want)
+				if fmt.Sprintf("%T", got) != fmt.Sprintf("%T", tt.want) {
+					t.Errorf("Update(%s) got = %T, want %T", msg, got, tt.want)
 				}
 			}
 		})
@@ -1150,26 +1057,6 @@ func TestInitInfoModel(t *testing.T) {
 	}
 }
 
-func TestListStageType_Init(t *testing.T) {
-	tests := []struct {
-		name string
-		want tea.Cmd
-	}{
-		{
-			name: "posisitve test #1",
-			want: nil,
-		},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			m := &ListStageType{}
-			if got := m.Init(); !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("Init() = %v, want %v", got, tt.want)
-			}
-		})
-	}
-}
-
 func TestListStageType_Prepare(t *testing.T) {
 	clientT := NewClient()
 	app, _ := NewAgent()
@@ -1205,6 +1092,7 @@ func TestListStageType_Prepare(t *testing.T) {
 func TestListStageType_Update(t *testing.T) {
 	clientT := NewClient()
 	app, _ := NewAgent()
+	app.currenStage = "list"
 	app.client = &clientT
 	app.userID = "exist_user"
 
@@ -1224,7 +1112,7 @@ func TestListStageType_Update(t *testing.T) {
 					tea.KeyMsg{Type: tea.KeyEsc},
 				},
 			},
-			want: "tea.QuitMsg",
+			want: "list",
 		},
 		{
 			name: "positive test #2",
@@ -1233,7 +1121,7 @@ func TestListStageType_Update(t *testing.T) {
 					tea.KeyMsg{Type: tea.KeyEnter},
 				},
 			},
-			want: "agent.openForm",
+			want: "login_password",
 		},
 		{
 			name: "positive test #3",
@@ -1242,7 +1130,7 @@ func TestListStageType_Update(t *testing.T) {
 					tea.KeyMsg{Type: tea.KeyCtrlN},
 				},
 			},
-			want: "agent.openStage",
+			want: "operation_list",
 		},
 	}
 	for _, tt := range tests {
@@ -1252,10 +1140,10 @@ func TestListStageType_Update(t *testing.T) {
 			m.Prepare(app)
 
 			for _, msg := range tt.args.msgs {
-				_, got := m.Update(msg.(tea.KeyMsg))
+				_ = m.Update(app, msg.(tea.KeyMsg))
 
-				if fmt.Sprintf("%T", got()) != tt.want {
-					t.Errorf("Update(%s) got = %T, want %s", msg, got(), tt.want)
+				if app.currenStage != tt.want {
+					t.Errorf("Update(%s) currenStage = %s, want %s", msg, app.currenStage, tt.want)
 				}
 			}
 		})
@@ -1275,7 +1163,7 @@ func TestListStageType_View(t *testing.T) {
 	}{
 		{
 			name: "positive test #1",
-			want: "   Мои записи                                   \n                                                \n  2 items                                       \n                                                \n                                                \n  1/2                                           \n                                                \n  ↑/k up • ↓/j down • / filter • q quit • ? more\n\n[ Ctrl+n ] - Создать новую запись\n",
+			want: "                                                \n  2 items                                       \n                                                \n                                                \n  1/2                                           \n                                                \n  ↑/k up • ↓/j down • / filter • q quit • ? more\n\n[ Ctrl+n ] - Создать новую запись\n",
 		},
 	}
 	for _, tt := range tests {
@@ -1286,27 +1174,6 @@ func TestListStageType_View(t *testing.T) {
 
 			if got := m.View(); got != tt.want {
 				t.Errorf("View() = %v, want %v", got, tt.want)
-			}
-		})
-	}
-}
-
-func TestLoginPasswordStageType_Init(t *testing.T) {
-	tests := []struct {
-		name string
-		want tea.Cmd
-	}{
-		{
-			name: "positive test #1",
-			want: nil,
-		},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			m := &LoginPasswordStageType{}
-
-			if got := m.Init(); !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("Init() = %v, want %v", got, tt.want)
 			}
 		})
 	}
@@ -1383,7 +1250,7 @@ func TestLoginPasswordStageType_Update(t *testing.T) {
 					tea.KeyMsg{Type: tea.KeyEsc},
 				},
 			},
-			want: "tea.QuitMsg",
+			want: "login_password",
 		},
 		{
 			name: "positive test #2",
@@ -1392,7 +1259,7 @@ func TestLoginPasswordStageType_Update(t *testing.T) {
 					tea.KeyMsg{Type: tea.KeyCtrlB},
 				},
 			},
-			want: "agent.openList",
+			want: "list",
 		},
 		{
 			name: "positive test #3",
@@ -1405,19 +1272,20 @@ func TestLoginPasswordStageType_Update(t *testing.T) {
 					tea.KeyMsg{Type: tea.KeyDown},
 				},
 			},
-			want: "cursor.BlinkMsg",
+			want: "login_password",
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			m := &LoginPasswordStageType{}
+			app.currenStage = "login_password"
 			m.Prepare(app)
 
 			for _, msg := range tt.args.msgs {
-				_, got := m.Update(msg.(tea.KeyMsg))
+				_ = m.Update(app, msg.(tea.KeyMsg))
 
-				if fmt.Sprintf("%T", got()) != tt.want {
-					t.Errorf("Update(%s) got = %T, want %s", msg, got(), tt.want)
+				if app.currenStage != tt.want {
+					t.Errorf("Update(%s) currenStage = %s, want %s", msg, app.currenStage, tt.want)
 				}
 			}
 		})
@@ -1578,14 +1446,14 @@ func TestLoginPasswordStageType_save(t *testing.T) {
 			args: args{
 				recordId: "exist_id",
 			},
-			want: "agent.openList",
+			want: "list",
 		},
 		{
 			name: "positive test #2",
 			args: args{
 				recordId: "error",
 			},
-			want: "agent.infoMsg",
+			want: "info",
 		},
 	}
 	for _, tt := range tests {
@@ -1595,9 +1463,9 @@ func TestLoginPasswordStageType_save(t *testing.T) {
 			app.recordID = tt.args.recordId
 			m.Prepare(app)
 
-			_, got := m.save()
-			if fmt.Sprintf("%T", got()) != tt.want {
-				t.Errorf("save() got = %T, want %s", got(), tt.want)
+			m.save(app)
+			if app.currenStage != tt.want {
+				t.Errorf("save() got = %T, want %s", app.currenStage, tt.want)
 			}
 		})
 	}
@@ -1631,26 +1499,6 @@ func TestLoginPasswordStageType_updateInputs(t *testing.T) {
 	}
 }
 
-func TestLoginStageType_Init(t *testing.T) {
-	tests := []struct {
-		name string
-		want tea.Cmd
-	}{
-		{
-			name: "positive test #1",
-			want: nil,
-		},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			s := &LoginStageType{}
-			if got := s.Init(); !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("Init() = %v, want %v", got, tt.want)
-			}
-		})
-	}
-}
-
 func TestLoginStageType_Prepare(t *testing.T) {
 	clientT := NewClient()
 	app, _ := NewAgent()
@@ -1675,6 +1523,7 @@ func TestLoginStageType_Update(t *testing.T) {
 	clientT := NewClient()
 	app, _ := NewAgent()
 	app.client = &clientT
+	app.currenStage = "login"
 
 	type args struct {
 		msgs       []tea.Msg
@@ -1693,7 +1542,7 @@ func TestLoginStageType_Update(t *testing.T) {
 					tea.KeyMsg{Type: tea.KeyEsc},
 				},
 			},
-			want: "tea.QuitMsg",
+			want: "login",
 		},
 		{
 			name: "positive test #2",
@@ -1704,7 +1553,7 @@ func TestLoginStageType_Update(t *testing.T) {
 				},
 				focusIndex: 1,
 			},
-			want: "",
+			want: "login",
 		},
 		{
 			name: "positive test #2",
@@ -1715,7 +1564,7 @@ func TestLoginStageType_Update(t *testing.T) {
 				},
 				focusIndex: 1,
 			},
-			want: "cursor.BlinkMsg",
+			want: "login",
 		},
 		{
 			name: "positive test #3",
@@ -1725,7 +1574,7 @@ func TestLoginStageType_Update(t *testing.T) {
 				},
 				focusIndex: 3,
 			},
-			want: "agent.openStage",
+			want: "start",
 		},
 		{
 			name: "positive test #4",
@@ -1735,7 +1584,7 @@ func TestLoginStageType_Update(t *testing.T) {
 				},
 				focusIndex: 2,
 			},
-			want: "agent.authSuccessMsg",
+			want: "list",
 		},
 	}
 	for _, tt := range tests {
@@ -1745,17 +1594,10 @@ func TestLoginStageType_Update(t *testing.T) {
 
 			for _, msg := range tt.args.msgs {
 				m.focusIndex = tt.args.focusIndex
-				_, got := m.Update(msg.(tea.KeyMsg))
+				_ = m.Update(app, msg.(tea.KeyMsg))
 
-				if got == nil {
-					if tt.want != "" {
-						t.Errorf("Update(%s) got = nil, want %s", msg, tt.want)
-					}
-					continue
-				}
-
-				if fmt.Sprintf("%T", got()) != tt.want {
-					t.Errorf("Update(%s) got = %T, want %s", msg, got(), tt.want)
+				if app.currenStage != tt.want {
+					t.Errorf("Update(%s) currenStage = %s, want %s", msg, app.currenStage, tt.want)
 				}
 			}
 		})
@@ -1807,14 +1649,14 @@ func TestLoginStageType_process(t *testing.T) {
 			args: args{
 				userName: "Пользователь",
 			},
-			want: "agent.authSuccessMsg",
+			want: "list",
 		},
 		{
 			name: "negative test #2",
 			args: args{
 				userName: "error",
 			},
-			want: "agent.infoMsg",
+			want: "info",
 		},
 	}
 	for _, tt := range tests {
@@ -1825,10 +1667,10 @@ func TestLoginStageType_process(t *testing.T) {
 			m.inputs[0].SetValue(tt.args.userName)
 			m.inputs[1].SetValue("Пароль")
 
-			_, got := m.process()
+			m.process(app)
 
-			if fmt.Sprintf("%T", got()) != tt.want {
-				t.Errorf("process() got = %T, want %s", got(), tt.want)
+			if app.currenStage != tt.want {
+				t.Errorf("process() currenStage = %s, want %s", app.currenStage, tt.want)
 			}
 		})
 	}
@@ -1889,26 +1731,6 @@ func TestNewAgent(t *testing.T) {
 	}
 }
 
-func TestOperationListStageType_Init(t *testing.T) {
-	tests := []struct {
-		name string
-		want tea.Cmd
-	}{
-		{
-			name: "positive test #1",
-			want: nil,
-		},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			s := &OperationListStageType{}
-			if got := s.Init(); !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("Init() = %v, want %v", got, tt.want)
-			}
-		})
-	}
-}
-
 func TestOperationListStageType_Prepare(t *testing.T) {
 	clientT := NewClient()
 	app, _ := NewAgent()
@@ -1939,6 +1761,7 @@ func TestOperationListStageType_Update(t *testing.T) {
 	clientT := NewClient()
 	app, _ := NewAgent()
 	app.client = &clientT
+	app.currenStage = "operation_list"
 
 	type args struct {
 		msgs []tea.Msg
@@ -1954,9 +1777,11 @@ func TestOperationListStageType_Update(t *testing.T) {
 				msgs: []tea.Msg{
 					tea.KeyMsg{Type: tea.KeyCtrlC},
 					tea.KeyMsg{Type: tea.KeyEsc},
+					tea.KeyMsg{Type: tea.KeyUp},
+					tea.KeyMsg{Type: tea.KeyDown},
 				},
 			},
-			want: "tea.QuitMsg",
+			want: "operation_list",
 		},
 		{
 			name: "positive test #2",
@@ -1966,7 +1791,7 @@ func TestOperationListStageType_Update(t *testing.T) {
 					tea.KeyMsg{Type: tea.KeySpace},
 				},
 			},
-			want: "agent.openForm",
+			want: "login_password",
 		},
 	}
 	for _, tt := range tests {
@@ -1975,10 +1800,10 @@ func TestOperationListStageType_Update(t *testing.T) {
 			s.Prepare(app)
 
 			for _, msg := range tt.args.msgs {
-				_, got := s.Update(msg.(tea.KeyMsg))
+				_ = s.Update(app, msg.(tea.KeyMsg))
 
-				if fmt.Sprintf("%T", got()) != tt.want {
-					t.Errorf("Update(%s) got = %T, want %s", msg, got(), tt.want)
+				if app.currenStage != tt.want {
+					t.Errorf("Update(%s) currenStage = %T, want %s", msg, app.currenStage, tt.want)
 				}
 			}
 		})
@@ -2006,26 +1831,6 @@ func TestOperationListStageType_View(t *testing.T) {
 
 			if got := s.View(); got != tt.want {
 				t.Errorf("View() = %v, want %v", got, tt.want)
-			}
-		})
-	}
-}
-
-func TestRegisterStageType_Init(t *testing.T) {
-	tests := []struct {
-		name string
-		want tea.Cmd
-	}{
-		{
-			name: "positive test #1",
-			want: nil,
-		},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			s := &RegisterStageType{}
-			if got := s.Init(); !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("Init() = %v, want %v", got, tt.want)
 			}
 		})
 	}
@@ -2080,7 +1885,7 @@ func TestRegisterStageType_Update(t *testing.T) {
 					tea.KeyMsg{Type: tea.KeyEsc},
 				},
 			},
-			want: "tea.QuitMsg",
+			want: "register",
 		},
 		{
 			name: "positive test #2",
@@ -2090,7 +1895,7 @@ func TestRegisterStageType_Update(t *testing.T) {
 				},
 				focusIndex: 3,
 			},
-			want: "agent.openStage",
+			want: "start",
 		},
 		{
 			name: "positive test #3",
@@ -2100,7 +1905,7 @@ func TestRegisterStageType_Update(t *testing.T) {
 				},
 				focusIndex: 2,
 			},
-			want: "agent.authSuccessMsg",
+			want: "list",
 		},
 		{
 			name: "positive test #4",
@@ -2110,21 +1915,22 @@ func TestRegisterStageType_Update(t *testing.T) {
 				},
 				focusIndex: 2,
 			},
-			want: "cursor.BlinkMsg",
+			want: "register",
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			m := &RegisterStageType{}
+			app.currenStage = "register"
 			m.Prepare(app)
 
 			for _, msg := range tt.args.msgs {
 				m.focusIndex = tt.args.focusIndex
 
-				_, got := m.Update(msg.(tea.KeyMsg))
+				_ = m.Update(app, msg.(tea.KeyMsg))
 
-				if fmt.Sprintf("%T", got()) != tt.want {
-					t.Errorf("Update(%s) got = %T, want %s", msg, got(), tt.want)
+				if app.currenStage != tt.want {
+					t.Errorf("Update(%s) currenStage = %T, want %s", msg, app.currenStage, tt.want)
 				}
 			}
 		})
@@ -2181,14 +1987,14 @@ func TestRegisterStageType_process(t *testing.T) {
 			args: args{
 				userName: "Пользователь",
 			},
-			want: "agent.authSuccessMsg",
+			want: "list",
 		},
 		{
 			name: "negative test #2",
 			args: args{
 				userName: "error",
 			},
-			want: "agent.infoMsg",
+			want: "info",
 		},
 	}
 	for _, tt := range tests {
@@ -2199,10 +2005,10 @@ func TestRegisterStageType_process(t *testing.T) {
 			m.inputs[0].SetValue(tt.args.userName)
 			m.inputs[1].SetValue("Пароль")
 
-			_, got := m.process()
+			m.process(app)
 
-			if fmt.Sprintf("%T", got()) != tt.want {
-				t.Errorf("process() got = %T, want %s", got(), tt.want)
+			if app.currenStage != tt.want {
+				t.Errorf("process() got = %T, want %s", app.currenStage, tt.want)
 			}
 		})
 	}
@@ -2232,26 +2038,6 @@ func TestRegisterStageType_updateInputs(t *testing.T) {
 			m.Prepare(app)
 			if got := m.updateInputs(tt.args.msg); !reflect.DeepEqual(got, tt.want) {
 				t.Errorf("updateInputs() = %v, want %v", got, tt.want)
-			}
-		})
-	}
-}
-
-func TestStartStageType_Init(t *testing.T) {
-	tests := []struct {
-		name string
-		want tea.Cmd
-	}{
-		{
-			name: "positive test #1",
-			want: nil,
-		},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			s := &StartStageType{}
-			if got := s.Init(); !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("Init() = %v, want %v", got, tt.want)
 			}
 		})
 	}
@@ -2298,29 +2084,38 @@ func TestStartStageType_Update(t *testing.T) {
 					tea.KeyMsg{Type: tea.KeyEsc},
 				},
 			},
-			want: "tea.QuitMsg",
+			want: "start",
 		},
 		{
 			name: "positive test #2",
 			args: args{
 				msgs: []tea.Msg{
 					tea.KeyMsg{Type: tea.KeyCtrlR},
+				},
+			},
+			want: "registration",
+		},
+		{
+			name: "positive test #3",
+			args: args{
+				msgs: []tea.Msg{
 					tea.KeyMsg{Type: tea.KeyCtrlL},
 				},
 			},
-			want: "agent.openStage",
+			want: "login",
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			s := &StartStageType{}
+			app.currenStage = "start"
 			s.Prepare(app)
 
 			for _, msg := range tt.args.msgs {
-				_, got := s.Update(msg.(tea.KeyMsg))
+				_ = s.Update(app, msg.(tea.KeyMsg))
 
-				if fmt.Sprintf("%T", got()) != tt.want {
-					t.Errorf("Update(%s) got = %T, want %s", msg, got(), tt.want)
+				if app.currenStage != tt.want {
+					t.Errorf("Update(%s) currenStage = %s, want %s", msg, app.currenStage, tt.want)
 				}
 			}
 		})
@@ -2393,7 +2188,7 @@ func TestTextStageType_Update(t *testing.T) {
 					tea.KeyMsg{Type: tea.KeyCtrlC},
 				},
 			},
-			want: "tea.QuitMsg",
+			want: "text",
 		},
 		{
 			name: "positive test #2",
@@ -2403,7 +2198,7 @@ func TestTextStageType_Update(t *testing.T) {
 					tea.KeyMsg{Type: tea.KeyCtrlB},
 				},
 			},
-			want: "agent.openList",
+			want: "list",
 		},
 		{
 			name: "positive test #3",
@@ -2412,19 +2207,20 @@ func TestTextStageType_Update(t *testing.T) {
 					tea.KeyMsg{Type: tea.KeyTab},
 				},
 			},
-			want: "cursor.BlinkMsg",
+			want: "text",
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			m := &TextStageType{}
+			app.currenStage = "text"
 			m.Prepare(app)
 
 			for _, msg := range tt.args.msgs {
-				_, got := m.Update(msg.(tea.KeyMsg))
+				_ = m.Update(app, msg.(tea.KeyMsg))
 
-				if fmt.Sprintf("%T", got()) != tt.want {
-					t.Errorf("Update(%s) got = %T, want %s", msg, got(), tt.want)
+				if app.currenStage != tt.want {
+					t.Errorf("Update(%s) currenStage = %s, want %s", msg, app.currenStage, tt.want)
 				}
 			}
 		})
@@ -2442,7 +2238,7 @@ func TestTextStageType_View(t *testing.T) {
 	}{
 		{
 			name: "positive test 31",
-			want: "> Название\n> Описание\n┃   1                                   \n┃   ~                                   \n┃   ~                                   \n┃   ~                                   \n┃   ~                                   \n┃   ~                                   \n\n[ Ctrl+s ] - Сохранить\n[ Ctrl+b ] - Назад\n",
+			want: "> Название\n> Описание\n┃   1                                   \n┃                                       \n┃                                       \n┃                                       \n┃                                       \n┃                                       \n\n[ Ctrl+s ] - Сохранить\n[ Ctrl+b ] - Назад\n",
 		},
 	}
 	for _, tt := range tests {
@@ -2548,14 +2344,14 @@ func TestTextStageType_save(t *testing.T) {
 			args: args{
 				recordId: "exist_id",
 			},
-			want: "agent.openList",
+			want: "list",
 		},
 		{
 			name: "negetive test #2",
 			args: args{
 				recordId: "error",
 			},
-			want: "agent.infoMsg",
+			want: "info",
 		},
 	}
 	for _, tt := range tests {
@@ -2565,37 +2361,13 @@ func TestTextStageType_save(t *testing.T) {
 			app.recordID = tt.args.recordId
 			m.Prepare(app)
 
-			_, got := m.save()
-			if fmt.Sprintf("%T", got()) != tt.want {
-				t.Errorf("save() got = %T, want %s", got(), tt.want)
+			m.save(app)
+			if app.currenStage != tt.want {
+				t.Errorf("save() got = %T, want %s", app.currenStage, tt.want)
 			}
 		})
 	}
 }
-
-//func Test_agent_CatchTerminateSignal(t *testing.T) {
-//	tests := []struct {
-//		name    string
-//		wantErr bool
-//	}{
-//		{
-//			name:    "positive test #1",
-//			wantErr: false,
-//		},
-//	}
-//	for _, tt := range tests {
-//		t.Run(tt.name, func(t *testing.T) {
-//			a := &agent{}
-//
-//			go func() {
-//				timer := time.Timer{}
-//			}()
-//			if err := a.CatchTerminateSignal(); (err != nil) != tt.wantErr {
-//				t.Errorf("CatchTerminateSignal() error = %v, wantErr %v", err, tt.wantErr)
-//			}
-//		})
-//	}
-//}
 
 func Test_agent_Close(t *testing.T) {
 	tests := []struct {
@@ -2624,7 +2396,7 @@ func Test_agent_Init(t *testing.T) {
 	}{
 		{
 			name: "positive test #1",
-			want: "filepicker.readDirMsg",
+			want: "tea.BatchMsg",
 		},
 	}
 	for _, tt := range tests {

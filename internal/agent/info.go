@@ -29,31 +29,25 @@ func InitInfoModel(message string, back, backButton string) *InfoStageType {
 	}
 }
 
-// Init - заглушка для интерфейса.
-func (s *InfoStageType) Init() tea.Cmd {
-	return nil
-}
-
 // Prepare - заглушка для интерфейса.
 func (s *InfoStageType) Prepare(a *agent) {
 }
 
 // Update обрабатывает события пользователя.
-func (m *InfoStageType) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+func (m *InfoStageType) Update(a *agent, msg tea.Msg) tea.Cmd {
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
 		switch msg.String() {
 		case "ctrl+c", "esc":
-			return m, tea.Quit
+			return tea.Quit
 
 		case "enter":
-			return m, func() tea.Msg {
-				return openStage(m.back)
-			}
+			a.currenStage = m.back
+			return nil
 		}
 	}
 
-	return m, nil
+	return nil
 }
 
 // View отображает экран в терминале.

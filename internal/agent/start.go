@@ -13,32 +13,25 @@ type StartStageType struct {
 func (s *StartStageType) Prepare(a *agent) {
 }
 
-// Init инициализация модели.
-func (s *StartStageType) Init() tea.Cmd {
-	return nil
-}
-
 // Update обработка событий пользователя.
-func (s *StartStageType) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+func (s *StartStageType) Update(a *agent, msg tea.Msg) tea.Cmd {
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
 		switch msg.String() {
 		case "ctrl+c", "esc":
-			return s, tea.Quit
+			return tea.Quit
 
 		case "ctrl+r":
-			return s, func() tea.Msg {
-				return openStage("registration")
-			}
+			a.currenStage = "registration"
+			return nil
 
 		case "ctrl+l":
-			return s, func() tea.Msg {
-				return openStage("login")
-			}
+			a.currenStage = "login"
+			return nil
 		}
 	}
 
-	return s, nil
+	return nil
 }
 
 // View отображение экрана в терминале.

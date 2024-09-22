@@ -16,11 +16,6 @@ type OperationListStageType struct {
 	operations []operation
 }
 
-// Init заглушка для интерфейса.
-func (s *OperationListStageType) Init() tea.Cmd {
-	return nil
-}
-
 // Prepare подготавливает модель.
 func (s *OperationListStageType) Prepare(a *agent) {
 	s.operations = []operation{
@@ -44,13 +39,13 @@ func (s *OperationListStageType) Prepare(a *agent) {
 }
 
 // Update обработка событий пользователя.
-func (s *OperationListStageType) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+func (s *OperationListStageType) Update(a *agent, msg tea.Msg) tea.Cmd {
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
 		switch msg.String() {
 
 		case "ctrl+c", "esc":
-			return s, tea.Quit
+			return tea.Quit
 
 		case "up":
 			if s.cursor > 0 {
@@ -62,15 +57,14 @@ func (s *OperationListStageType) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			}
 		case "enter", " ":
 			s.selected = s.cursor
-			return s, func() tea.Msg {
-				return openForm{
-					type_record: s.operations[s.cursor].type_record,
-				}
-			}
+
+			a.currenStage = s.operations[s.cursor].type_record
+			a.recordID = ""
+			a.Stages[a.currenStage].Prepare(a)
 		}
 	}
 
-	return s, nil
+	return nil
 }
 
 // View отображение списка операций.

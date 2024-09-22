@@ -10,6 +10,7 @@ import (
 	"github.com/KirillKhitev/goph_keeper/internal/mycrypto"
 	"github.com/charmbracelet/bubbles/textarea"
 	"log"
+	"slices"
 	"strings"
 	"time"
 
@@ -68,54 +69,58 @@ func (m *TextStageType) Prepare(a *agent) {
 }
 
 // save отправляет форму на сервер.
-func (m *TextStageType) save() (tea.Model, tea.Cmd) {
+func (m *TextStageType) save(a *agent) {
 	body, _ := mycrypto.Encrypt([]byte(m.textarea.Value()), m.userID)
-
-	data := models.Data{
-		ID:          m.recordID,
-		UserID:      m.userID,
-		Name:        []byte(m.inputs[0].Value()),
-		Type:        "text",
-		Deleted:     false,
-		Description: []byte(m.inputs[1].Value()),
-		Date:        time.Now(),
-		Body:        body,
-	}
-
-	bytes, _ := json.Marshal(data)
-
-	ctx := context.TODO()
+	url := fmt.Sprintf("http://%s/api/data/update", config.ConfigClient.AddrServer)
 	headers := map[string]string{
 		"Authorization": m.token,
 	}
 
-	url := fmt.Sprintf("http://%s/api/data/update", config.ConfigClient.AddrServer)
-	response := (*m.client).Update(ctx, url, headers, bytes)
-
-	if response.Code != 200 {
-		return m, func() tea.Msg {
-			return infoMsg{
-				message:    string(response.Response),
-				back:       "text",
-				backButton: "Назад",
-			}
+	var c int
+	for bp := range slices.Chunk(body, ChunkSize) {
+		data := models.Data{
+			ID:          m.recordID,
+			UserID:      m.userID,
+			Name:        []byte(m.inputs[0].Value()),
+			Type:        "text",
+			Deleted:     false,
+			Description: []byte(m.inputs[1].Value()),
+			Date:        time.Now(),
+			Body:        []byte(bp),
+			Part:        c,
 		}
+
+		bytes, _ := json.Marshal(data)
+
+		ctx := context.TODO()
+
+		response := (*m.client).Update(ctx, url, headers, bytes)
+
+		if response.Code != 200 {
+			a.currenStage = "info"
+			a.Stages[a.currenStage] = InitInfoModel(string(response.Response), "text", "Назад")
+			return
+		}
+
+		m.recordID = string(response.Response)
+
+		c++
 	}
 
-	return m, func() tea.Msg {
-		return openList{}
-	}
+	a.currenStage = "list"
+	a.recordID = ""
+	a.Stages[a.currenStage].Prepare(a)
 }
 
 // Update обработка событий пользователя.
-func (m *TextStageType) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+func (m *TextStageType) Update(a *agent, msg tea.Msg) tea.Cmd {
 	var cmds []tea.Cmd
 
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
 		switch msg.String() {
 		case "ctrl+c":
-			return m, tea.Quit
+			return tea.Quit
 
 		case "esc":
 			if m.textarea.Focused() {
@@ -123,13 +128,15 @@ func (m *TextStageType) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			}
 
 		case "ctrl+s":
-			return m.save()
+			m.save(a)
+			return nil
 
 		case "ctrl+b":
-			return m, func() tea.Msg {
+			a.currenStage = "list"
+			a.recordID = ""
+			a.Stages[a.currenStage].Prepare(a)
 
-				return openList{}
-			}
+			return nil
 
 		case "tab", "shift+tab", "up", "down":
 			s := msg.String()
@@ -164,8 +171,6 @@ func (m *TextStageType) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			if 2 == m.focusIndex {
 				cmds = append(cmds, m.textarea.Focus())
 			}
-
-			return m, tea.Batch(cmds...)
 		}
 	}
 
@@ -176,7 +181,7 @@ func (m *TextStageType) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	m.textarea, cmdt = m.textarea.Update(msg)
 	cmds = append(cmds, cmdt)
 
-	return m, tea.Batch(cmds...)
+	return tea.Batch(cmds...)
 }
 
 // View отображение экрана в терминале.

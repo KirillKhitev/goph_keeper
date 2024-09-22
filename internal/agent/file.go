@@ -12,6 +12,7 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 	"log"
 	"os"
+	"slices"
 	"strings"
 	"time"
 )
@@ -28,6 +29,8 @@ type FileStageType struct {
 // Сообщение очистки ошибки.
 type clearErrorMsg struct{}
 
+const ChunkSize = 50000000
+
 // clearErrorAfter команда очистки ошибки.
 func clearErrorAfter(t time.Duration) tea.Cmd {
 	return tea.Tick(t, func(_ time.Time) tea.Msg {
@@ -35,21 +38,12 @@ func clearErrorAfter(t time.Duration) tea.Cmd {
 	})
 }
 
-// Init инициализирует модель.
-func (m *FileStageType) Init() tea.Cmd {
-	return nil
-}
-
 // Update обрабатывает события пользователя.
-func (m *FileStageType) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+func (m *FileStageType) Update(a *agent, msg tea.Msg) tea.Cmd {
 	if m.recordID != "" {
-		return m, func() tea.Msg {
-			return infoMsg{
-				message:    "Файл был скачен в папку files",
-				back:       "list",
-				backButton: "На список",
-			}
-		}
+		a.currenStage = "info"
+		a.Stages[a.currenStage] = InitInfoModel("Файл был скачен в папку files", "list", "На список")
+		return nil
 	}
 
 	var cmd tea.Cmd
@@ -67,7 +61,7 @@ func (m *FileStageType) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	if didSelect, path := m.filepicker.DidSelectDisabledFile(msg); didSelect {
 		m.err = errors.New(path + " не валидный.\r\n")
 		m.selectedFile = ""
-		return m, tea.Batch(cmd, clearErrorAfter(2*time.Second))
+		return tea.Batch(cmd, clearErrorAfter(2*time.Second))
 	}
 
 	switch msg := msg.(type) {
@@ -75,15 +69,16 @@ func (m *FileStageType) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		switch msg.String() {
 		case "ctrl+c", "esc":
 			m.quitting = true
-			return m, tea.Quit
+			return tea.Quit
 		case "enter":
-			return m.save()
+			m.save(a)
+			return nil
 		}
 	case clearErrorMsg:
 		m.err = nil
 	}
 
-	return m, cmd
+	return cmd
 }
 
 // View отображает форму в терминале.
@@ -143,18 +138,14 @@ func (m *FileStageType) Prepare(a *agent) {
 }
 
 // save отправляет данные формы на сервер.
-func (m *FileStageType) save() (tea.Model, tea.Cmd) {
+func (m *FileStageType) save(a *agent) {
 	body, err := os.ReadFile(m.selectedFile)
 
 	if err != nil {
-		return m, func() tea.Msg {
-			log.Println("save ", m.selectedFile, err)
-			return infoMsg{
-				message:    fmt.Sprintf("Ошибка при чтении файла"),
-				back:       "file",
-				backButton: "Назад",
-			}
-		}
+		log.Println("save ", m.selectedFile, err)
+		a.currenStage = "info"
+		a.Stages[a.currenStage] = InitInfoModel("Ошибка при чтении файла", "file", "Назад")
+		return
 	}
 
 	body, _ = mycrypto.Encrypt(body, m.userID)
@@ -165,49 +156,43 @@ func (m *FileStageType) save() (tea.Model, tea.Cmd) {
 
 	file, _ := f.Stat()
 
-	if file.Size() > 100000000 {
-		return m, func() tea.Msg {
-			log.Println("save ", m.selectedFile, err)
-			return infoMsg{
-				message:    fmt.Sprintf("Файл не может быть больше 100Мб"),
-				back:       "file",
-				backButton: "Назад",
-			}
-		}
-	}
-
-	data := models.Data{
-		ID:          m.recordID,
-		UserID:      m.userID,
-		Name:        []byte(file.Name()),
-		Type:        "file",
-		Deleted:     false,
-		Description: []byte("Файл"),
-		Date:        time.Now(),
-		Body:        body,
-	}
-
-	bytes, _ := json.Marshal(data)
-
-	ctx := context.TODO()
+	url := fmt.Sprintf("http://%s/api/data/update", config.ConfigClient.AddrServer)
 	headers := map[string]string{
 		"Authorization": m.token,
 	}
 
-	url := fmt.Sprintf("http://%s/api/data/update", config.ConfigClient.AddrServer)
-	response := (*m.client).Update(ctx, url, headers, bytes)
-
-	if response.Code != 200 {
-		return m, func() tea.Msg {
-			return infoMsg{
-				message:    string(response.Response),
-				back:       "file",
-				backButton: "Назад",
-			}
+	var c int
+	for bp := range slices.Chunk(body, ChunkSize) {
+		data := models.Data{
+			ID:          m.recordID,
+			UserID:      m.userID,
+			Name:        []byte(file.Name()),
+			Type:        "file",
+			Deleted:     false,
+			Description: []byte("Файл"),
+			Date:        time.Now(),
+			Body:        bp,
+			Part:        c,
 		}
+
+		bytes, _ := json.Marshal(data)
+
+		ctx := context.TODO()
+
+		response := (*m.client).Update(ctx, url, headers, bytes)
+
+		if response.Code != 200 {
+			a.currenStage = "info"
+			a.Stages[a.currenStage] = InitInfoModel(string(response.Response), "file", "Назад")
+			return
+		}
+
+		m.recordID = string(response.Response)
+
+		c++
 	}
 
-	return m, func() tea.Msg {
-		return openList{}
-	}
+	a.currenStage = "list"
+	a.recordID = ""
+	a.Stages[a.currenStage].Prepare(a)
 }

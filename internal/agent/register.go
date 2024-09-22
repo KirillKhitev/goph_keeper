@@ -35,11 +35,6 @@ type RegisterStageType struct {
 	client     *client.Client
 }
 
-// Init - заглушка для интерфейса.
-func (s *RegisterStageType) Init() tea.Cmd {
-	return nil
-}
-
 // Prepare подготавливает модель.
 func (s *RegisterStageType) Prepare(a *agent) {
 	s.inputs = make([]textinput.Model, 2)
@@ -70,26 +65,28 @@ func (s *RegisterStageType) Prepare(a *agent) {
 }
 
 // Update обработка событий пользователя.
-func (m *RegisterStageType) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+func (m *RegisterStageType) Update(a *agent, msg tea.Msg) tea.Cmd {
+	cmds := make([]tea.Cmd, len(m.inputs))
+
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
 		switch msg.String() {
 		case "ctrl+c", "esc":
-			return m, tea.Quit
+			return tea.Quit
 
 		case "tab", "shift+tab", "enter", "up", "down":
 			s := msg.String()
 
 			// Назад
 			if s == "enter" && m.focusIndex == len(m.inputs)+1 {
-				return m, func() tea.Msg {
-					return openStage("start")
-				}
+				a.currenStage = "start"
+				return nil
 			}
 
 			//Зарегистрироваться
 			if s == "enter" && m.focusIndex == len(m.inputs) {
-				return m.process()
+				m.process(a)
+				return nil
 			}
 
 			if s == "up" || s == "shift+tab" {
@@ -104,7 +101,6 @@ func (m *RegisterStageType) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				m.focusIndex = len(m.inputs) + 1
 			}
 
-			cmds := make([]tea.Cmd, len(m.inputs))
 			for i := 0; i <= len(m.inputs)-1; i++ {
 				if i == m.focusIndex {
 					cmds[i] = m.inputs[i].Focus()
@@ -117,18 +113,17 @@ func (m *RegisterStageType) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				m.inputs[i].PromptStyle = noStyle
 				m.inputs[i].TextStyle = noStyle
 			}
-
-			return m, tea.Batch(cmds...)
 		}
 	}
 
 	cmd := m.updateInputs(msg)
+	cmds = append(cmds, cmd)
 
-	return m, cmd
+	return tea.Batch(cmds...)
 }
 
 // process отправляет форму регистрации на сервер.
-func (m *RegisterStageType) process() (tea.Model, tea.Cmd) {
+func (m *RegisterStageType) process(a *agent) {
 	data := auth.AuthorizingData{
 		UserName: m.inputs[0].Value(),
 		Password: m.inputs[1].Value(),
@@ -144,23 +139,15 @@ func (m *RegisterStageType) process() (tea.Model, tea.Cmd) {
 
 	if err := json.Unmarshal(response.Response, &result); err != nil {
 		log.Println("Error unmarshalling response: ", err)
-		return m, func() tea.Msg {
-			return infoMsg{
-				message:    "Не смогли распарсить ответ",
-				back:       "registration",
-				backButton: "Назад",
-			}
-		}
+		a.currenStage = "info"
+		a.Stages[a.currenStage] = InitInfoModel("Не смогли распарсить ответ", "registration", "Назад")
+		return
 	}
 
 	if response.Code != 200 {
-		return m, func() tea.Msg {
-			return infoMsg{
-				message:    result.Msg,
-				back:       "registration",
-				backButton: "Назад",
-			}
-		}
+		a.currenStage = "info"
+		a.Stages[a.currenStage] = InitInfoModel(result.Msg, "registration", "Назад")
+		return
 	}
 
 	path := "users" + string(os.PathSeparator) + result.ID
@@ -169,22 +156,20 @@ func (m *RegisterStageType) process() (tea.Model, tea.Cmd) {
 
 	if err != nil {
 		log.Printf("ошибка при сохранении ключа пользователя[%s]: %s", result.ID, err)
-		return m, func() tea.Msg {
-			return errMsg{
-				error: fmt.Errorf("ошибка при сохранении ключа, сохраните файл %s с содержимым: %s", path, result.Key),
-				back:  "start",
-			}
-		}
+		a.currenStage = "error"
+		a.Stages[a.currenStage] = InitErrorModel(fmt.Errorf("ошибка при сохранении ключа, сохраните файл %s с содержимым: %s", path, result.Key), "start")
+		return
 	}
 
 	f.Write([]byte(result.Key))
 
-	return m, func() tea.Msg {
-		return authSuccessMsg{
-			userID: result.ID,
-			token:  response.Token,
-		}
-	}
+	a.currenStage = "list"
+	a.userID = result.ID
+	a.token = response.Token
+
+	(*a.client).SetUserID(result.ID)
+
+	a.Stages[a.currenStage].Prepare(a)
 }
 
 // updateInputs обрабатывает ввод текста в поля формы.

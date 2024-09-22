@@ -21,30 +21,24 @@ func InitErrorModel(error error, back string) *ErrorStageType {
 	}
 }
 
-// Init - заглушка для интерфейса.
-func (s *ErrorStageType) Init() tea.Cmd {
-	return nil
-}
-
 // Prepare - заглушка для интерфейса.
 func (s *ErrorStageType) Prepare(a *agent) {
 }
 
 // Update - обработка событий пользователя.
-func (m *ErrorStageType) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+func (m *ErrorStageType) Update(a *agent, msg tea.Msg) tea.Cmd {
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
 		switch msg.String() {
 		case "ctrl+c", "esc":
-			return m, tea.Quit
+			return tea.Quit
 		case "enter":
-			return m, func() tea.Msg {
-				return openStage(m.back)
-			}
+			a.currenStage = m.back
+			return nil
 		}
 	}
 
-	return m, nil
+	return nil
 }
 
 // View - отображает текст модели в терминале.

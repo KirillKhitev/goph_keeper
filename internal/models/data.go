@@ -14,6 +14,7 @@ type Data struct {
 	Date        time.Time `json:"date,omitempty"`
 	Body        []byte    `json:"body,omitempty"`
 	Description []byte    `json:"description,omitempty"`
+	Part        int       `json:"part,omitempty"`
 }
 
 // LoginBody тип тела авторизации.
